@@ -1,1 +1,4 @@
-# sd-al79138-al79229-al79908
+# Sistemas Distribuidos
+Rui Requeijo - al79138
+João Mendes - al79229
+Matilde Coelho - al79908
