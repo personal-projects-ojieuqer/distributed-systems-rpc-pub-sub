@@ -1,0 +1,9 @@
+version: '3.4'
+
+services:
+  sd-tp1:
+    image: ${DOCKER_REGISTRY-}sdtp1
+    build:
+      context: .
+      dockerfile: sd-tp1/Dockerfile
+
