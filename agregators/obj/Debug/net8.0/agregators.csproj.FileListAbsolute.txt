@@ -1,0 +1,14 @@
+C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\Agregators\bin\Debug\net8.0\agregators.exe
+C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\Agregators\bin\Debug\net8.0\agregators.deps.json
+C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\Agregators\bin\Debug\net8.0\agregators.runtimeconfig.json
+C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\Agregators\bin\Debug\net8.0\agregators.dll
+C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\Agregators\bin\Debug\net8.0\agregators.pdb
+C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\Agregators\obj\Debug\net8.0\agregators.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\Agregators\obj\Debug\net8.0\agregators.AssemblyInfoInputs.cache
+C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\Agregators\obj\Debug\net8.0\agregators.AssemblyInfo.cs
+C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\Agregators\obj\Debug\net8.0\agregators.csproj.CoreCompileInputs.cache
+C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\Agregators\obj\Debug\net8.0\agregators.dll
+C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\Agregators\obj\Debug\net8.0\refint\agregators.dll
+C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\Agregators\obj\Debug\net8.0\agregators.pdb
+C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\Agregators\obj\Debug\net8.0\agregators.genruntimeconfig.cache
+C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\Agregators\obj\Debug\net8.0\ref\agregators.dll
