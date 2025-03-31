@@ -9,7 +9,7 @@ services:
       MYSQL_DATABASE: wavy-db
       MYSQL_ROOT_HOST: '%'
     volumes:
-      - ./mysql1:/docker-entrypoint-initdb.d
+      - ./mysql-wavy:/docker-entrypoint-initdb.d
     ports:
       - "3307:3306"
 
@@ -20,7 +20,7 @@ services:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: agregator-db
     volumes:
-      - ./mysql2:/docker-entrypoint-initdb.d
+      - ./mysql-agregator:/docker-entrypoint-initdb.d
     ports:
       - "3308:3306"
 
@@ -31,6 +31,6 @@ services:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: server-db
     volumes:
-      - ./mysql3:/docker-entrypoint-initdb.d
+      - ./mysql-server:/docker-entrypoint-initdb.d
     ports:
       - "3309:3306"

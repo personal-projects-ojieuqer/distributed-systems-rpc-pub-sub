@@ -1,2 +1,15 @@
 .vs/
-obj/
+
+.obj/
+
+wavies/bin/
+
+wavies/obj/
+
+agregators/bin/
+
+agregators/obj/
+
+server/bin/
+
+server/obj/
