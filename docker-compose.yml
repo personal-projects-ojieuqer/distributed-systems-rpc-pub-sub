@@ -1,36 +1,60 @@
 version: '3.9'
 
 services:
-  mysql1:
+  agregator1:
     image: mysql:8.0
-    container_name: mysql_wavy
+    container_name: mysql_agregator1
+    restart: always
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: wavy-db
-      MYSQL_ROOT_HOST: '%'
+      MYSQL_DATABASE: agregator1-db
     volumes:
-      - ./mysql-wavy:/docker-entrypoint-initdb.d
+      - ./mysql-agregator1:/docker-entrypoint-initdb.d
+      - mysql-ag1-data:/var/lib/mysql
     ports:
-      - "3307:3306"
+      - "3311:3306"
 
-  mysql2:
+  agregator2:
     image: mysql:8.0
-    container_name: mysql_agregator
+    container_name: mysql_agregator2
+    restart: always
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: agregator-db
+      MYSQL_DATABASE: agregator2-db
     volumes:
-      - ./mysql-agregator:/docker-entrypoint-initdb.d
+      - ./mysql-agregator2:/docker-entrypoint-initdb.d
+      - mysql-ag2-data:/var/lib/mysql
     ports:
-      - "3308:3306"
+      - "3312:3306"
 
-  mysql3:
+  agregator3:
+    image: mysql:8.0
+    container_name: mysql_agregator3
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: agregator3-db
+    volumes:
+      - ./mysql-agregator3:/docker-entrypoint-initdb.d
+      - mysql-ag3-data:/var/lib/mysql
+    ports:
+      - "3313:3306"
+
+  server:
     image: mysql:8.0
     container_name: mysql_server
+    restart: always
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: server-db
     volumes:
       - ./mysql-server:/docker-entrypoint-initdb.d
+      - mysql-server-data:/var/lib/mysql
     ports:
-      - "3309:3306"
+      - "3314:3306"
+
+volumes:
+  mysql-ag1-data:
+  mysql-ag2-data:
+  mysql-ag3-data:
+  mysql-server-data:
