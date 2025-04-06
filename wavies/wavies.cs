@@ -1,1 +1,0 @@
-﻿//para as wavies

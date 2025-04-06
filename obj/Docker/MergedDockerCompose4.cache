@@ -1,0 +1,110 @@
+name: dockercompose10019542378263021055
+services:
+  agregator1:
+    container_name: mysql_agregator1
+    environment:
+      MYSQL_DATABASE: agregator1-db
+      MYSQL_ROOT_PASSWORD: root
+    image: mysql:8.0
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 3306
+        published: "3311"
+        protocol: tcp
+    restart: always
+    volumes:
+      - type: bind
+        source: C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP1\sd-al79138-al79229-al79908\mysql-agregator1
+        target: /docker-entrypoint-initdb.d
+        bind:
+          create_host_path: true
+      - type: volume
+        source: mysql-ag1-data
+        target: /var/lib/mysql
+        volume: {}
+  agregator2:
+    container_name: mysql_agregator2
+    environment:
+      MYSQL_DATABASE: agregator2-db
+      MYSQL_ROOT_PASSWORD: root
+    image: mysql:8.0
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 3306
+        published: "3312"
+        protocol: tcp
+    restart: always
+    volumes:
+      - type: bind
+        source: C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP1\sd-al79138-al79229-al79908\mysql-agregator2
+        target: /docker-entrypoint-initdb.d
+        bind:
+          create_host_path: true
+      - type: volume
+        source: mysql-ag2-data
+        target: /var/lib/mysql
+        volume: {}
+  agregator3:
+    container_name: mysql_agregator3
+    environment:
+      MYSQL_DATABASE: agregator3-db
+      MYSQL_ROOT_PASSWORD: root
+    image: mysql:8.0
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 3306
+        published: "3313"
+        protocol: tcp
+    restart: always
+    volumes:
+      - type: bind
+        source: C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP1\sd-al79138-al79229-al79908\mysql-agregator3
+        target: /docker-entrypoint-initdb.d
+        bind:
+          create_host_path: true
+      - type: volume
+        source: mysql-ag3-data
+        target: /var/lib/mysql
+        volume: {}
+  server:
+    container_name: mysql_server
+    environment:
+      MYSQL_DATABASE: server-db
+      MYSQL_ROOT_PASSWORD: root
+    image: mysql:8.0
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 3306
+        published: "3314"
+        protocol: tcp
+    restart: always
+    volumes:
+      - type: bind
+        source: C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP1\sd-al79138-al79229-al79908\mysql-server
+        target: /docker-entrypoint-initdb.d
+        bind:
+          create_host_path: true
+      - type: volume
+        source: mysql-server-data
+        target: /var/lib/mysql
+        volume: {}
+networks:
+  default:
+    name: dockercompose10019542378263021055_default
+volumes:
+  mysql-ag1-data:
+    name: dockercompose10019542378263021055_mysql-ag1-data
+  mysql-ag2-data:
+    name: dockercompose10019542378263021055_mysql-ag2-data
+  mysql-ag3-data:
+    name: dockercompose10019542378263021055_mysql-ag3-data
+  mysql-server-data:
+    name: dockercompose10019542378263021055_mysql-server-data
