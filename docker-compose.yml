@@ -1,13 +1,14 @@
 version: '3.9'
 
 services:
+  # ---------- BASES DE DADOS ----------
   agregator1:
     image: mysql:8.0
     container_name: mysql_agregator1
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: agregator1-db
+      MYSQL_DATABASE: agregator1_db
     volumes:
       - ./mysql-agregator1:/docker-entrypoint-initdb.d
       - mysql-ag1-data:/var/lib/mysql
@@ -20,7 +21,7 @@ services:
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: agregator2-db
+      MYSQL_DATABASE: agregator2_db
     volumes:
       - ./mysql-agregator2:/docker-entrypoint-initdb.d
       - mysql-ag2-data:/var/lib/mysql
@@ -33,7 +34,7 @@ services:
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: agregator3-db
+      MYSQL_DATABASE: agregator3_db
     volumes:
       - ./mysql-agregator3:/docker-entrypoint-initdb.d
       - mysql-ag3-data:/var/lib/mysql
@@ -52,6 +53,61 @@ services:
       - mysql-server-data:/var/lib/mysql
     ports:
       - "3314:3306"
+
+  # ---------- AGGREGATORS (C# APP) ----------
+  agregator_app_1:
+    build:
+        context: ./agregators
+        dockerfile: Dockerfile
+    container_name: agregator_app_1
+    depends_on:
+      - agregator1
+    environment:
+      AGGREGATOR_ID: AGG_01
+      MYSQL_HOST: localhost
+      MYSQL_PORT: 3311
+      MYSQL_DB: agregator1_db
+      MYSQL_USER: root
+      MYSQL_PASS: root
+      LISTEN_PORT: 13311
+    ports:
+      - "5001:13311"
+
+  agregator_app_2:
+    build: 
+            context: ./agregators
+            dockerfile: Dockerfile
+    container_name: agregator_app_2
+    depends_on:
+      - agregator2
+    environment:
+      AGGREGATOR_ID: AGG_02
+      MYSQL_HOST: localhost
+      MYSQL_PORT: 3312
+      MYSQL_DB: agregator2_db
+      MYSQL_USER: root
+      MYSQL_PASS: root
+      LISTEN_PORT: 13312
+    ports:
+      - "5002:13312"
+
+  agregator_app_3:
+    build: 
+            context: ./agregators
+            dockerfile: Dockerfile
+    container_name: agregator_app_3
+    depends_on:
+      - agregator3
+    environment:
+      AGGREGATOR_ID: AGG_03
+      MYSQL_HOST: localhost
+      MYSQL_PORT: 3313
+      MYSQL_DB: agregator3_db
+      MYSQL_USER: root
+      MYSQL_PASS: root
+      LISTEN_PORT: 13313
+    ports:
+      - "5003:13313"
 
 volumes:
   mysql-ag1-data:

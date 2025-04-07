@@ -1,8 +1,7 @@
-﻿using System.Text;
-
-
-namespace wavies.Wavy
+﻿namespace wavies.Wavy
 {
+    using System.Text;
+
     public static class WavyGenerator
     {
         public static string GetWaviesFolderPath()
@@ -43,6 +42,50 @@ namespace wavies.Wavy
             File.WriteAllText(configPath, configBuilder.ToString());
             Console.WriteLine($"Configuração criada em {configPath}");
         }
+
+
+        public static void AdicionarWavies()
+        {
+            Console.Write("Quantos WAVIES queres adicionar? ");
+            if (!int.TryParse(Console.ReadLine(), out int count) || count <= 0)
+            {
+                Console.WriteLine("Número inválido.");
+                return;
+            }
+
+            WavyGenerator.GenerateWavies(count);
+
+            var cts = new CancellationTokenSource();
+            Console.CancelKeyPress += (s, e) =>
+            {
+                Console.WriteLine("\nCancelamento pedido! A terminar geradores...");
+                e.Cancel = true;
+                cts.Cancel();
+            };
+
+            var tasks = new List<Task>();
+            for (int i = 1; i <= count; i++)
+            {
+                string wavyId = $"WAVY_{i:D3}";
+                Console.WriteLine($"A iniciar tarefa para {wavyId}...");
+                string folder = WavyGenerator.GetWaviesFolderPath();
+                tasks.Add(WavyGenerator.SimulateMultiSensorData(wavyId, folder, cts.Token));
+            }
+
+            try
+            {
+                Task.WaitAll(tasks.ToArray());
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Erro geral: {ex.Message}");
+            }
+
+            Console.WriteLine("Todos os WAVIES terminaram.");
+        }
+
+
+
 
         public static async Task SimulateMultiSensorData(string wavyId, string folderPath, CancellationToken cancellationToken)
         {
@@ -174,16 +217,47 @@ namespace wavies.Wavy
 
 
 
-        static void DeleteCsvFiles(string folderPath)
+        //static void DeleteCsvFiles(string folderPath)
+        //{
+        //    if (Directory.Exists(folderPath))
+        //    {
+        //        var files = Directory.GetFiles(folderPath, "WAVY_*.csv");
+        //        foreach (var file in files)
+        //        {
+        //            File.Delete(file);
+        //            Console.WriteLine($"Apagado: {Path.GetFileName(file)}");
+        //        }
+        //    }
+        //}
+
+
+        public static void EliminarWavies()
         {
-            if (Directory.Exists(folderPath))
+            string folder = WavyGenerator.GetWaviesFolderPath();
+            if (!Directory.Exists(folder))
             {
-                var files = Directory.GetFiles(folderPath, "WAVY_*.csv");
-                foreach (var file in files)
-                {
-                    File.Delete(file);
-                    Console.WriteLine($"Apagado: {Path.GetFileName(file)}");
-                }
+                Console.WriteLine("Nenhum WAVY existente encontrado.");
+                return;
+            }
+
+            var files = Directory.GetFiles(folder, "WAVY_*.csv");
+            if (!files.Any())
+            {
+                Console.WriteLine("Nenhum ficheiro WAVY para apagar.");
+                return;
+            }
+
+            foreach (var file in files)
+            {
+                File.Delete(file);
+                Console.WriteLine($"Apagado: {Path.GetFileName(file)}");
+            }
+
+            string configPath = Path.Combine(folder, "wavy_config.csv");
+            if (File.Exists(configPath))
+            {
+                File.Delete(configPath);
+                Console.WriteLine("Ficheiro de configuração apagado.");
             }
         }
 
