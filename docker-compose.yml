@@ -1,7 +1,7 @@
 version: '3.9'
 
 services:
-  # ---------- BASES DE DADOS ----------
+  # databases
   agregator1:
     image: mysql:8.0
     container_name: mysql_agregator1
@@ -54,7 +54,7 @@ services:
     ports:
       - "3314:3306"
 
-  # ---------- AGGREGATORS (C# APP) ----------
+  #agregadores em si
   agregator_app_1:
     build:
         context: ./agregators
@@ -64,8 +64,8 @@ services:
       - agregator1
     environment:
       AGGREGATOR_ID: AGG_01
-      MYSQL_HOST: localhost
-      MYSQL_PORT: 3311
+      MYSQL_HOST: agregator1
+      MYSQL_PORT: 3306
       MYSQL_DB: agregator1_db
       MYSQL_USER: root
       MYSQL_PASS: root
@@ -82,8 +82,8 @@ services:
       - agregator2
     environment:
       AGGREGATOR_ID: AGG_02
-      MYSQL_HOST: localhost
-      MYSQL_PORT: 3312
+      MYSQL_HOST: agregator2
+      MYSQL_PORT: 3306
       MYSQL_DB: agregator2_db
       MYSQL_USER: root
       MYSQL_PASS: root
@@ -100,8 +100,8 @@ services:
       - agregator3
     environment:
       AGGREGATOR_ID: AGG_03
-      MYSQL_HOST: localhost
-      MYSQL_PORT: 3313
+      MYSQL_HOST: agregator3
+      MYSQL_PORT: 3306
       MYSQL_DB: agregator3_db
       MYSQL_USER: root
       MYSQL_PASS: root
