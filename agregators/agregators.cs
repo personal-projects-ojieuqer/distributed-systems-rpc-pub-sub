@@ -7,18 +7,22 @@ namespace agregators
 {
     internal class Program
     {
-        static void Main(string[] args)
+        static void Main()
         {
-            string aggregatorId = "AGG_01";
-            int port = 13311;
-            string dbName = "agregator1-db";
+            string aggregatorId = Environment.GetEnvironmentVariable("AGGREGATOR_ID") ?? "AGG_01";
+            string dbHost = Environment.GetEnvironmentVariable("MYSQL_HOST") ?? "localhost";
+            string dbPort = Environment.GetEnvironmentVariable("MYSQL_PORT") ?? "3306";
+            string dbName = Environment.GetEnvironmentVariable("MYSQL_DB") ?? "agregator1_db";
+            string dbUser = Environment.GetEnvironmentVariable("MYSQL_USER") ?? "root";
+            string dbPass = Environment.GetEnvironmentVariable("MYSQL_PASS") ?? "root";
+            string listenPortStr = Environment.GetEnvironmentVariable("LISTEN_PORT") ?? "13311";
 
-            // Usa a porta correta definida no docker-compose para o AGG_01
-            string connString = "Server=127.0.0.1;Port=3311;Database=agregator1-db;Uid=root;Pwd=root;";
+            int listenPort = int.Parse(listenPortStr);
+            string connString = $"Server={dbHost};Port={dbPort};Database={dbName};Uid={dbUser};Pwd={dbPass};";
 
-            var listener = new TcpListener(IPAddress.Any, port);
+            var listener = new TcpListener(IPAddress.Any, listenPort);
             listener.Start();
-            Console.WriteLine($"{aggregatorId} a escutar na porta {port}...");
+            Console.WriteLine($"{aggregatorId} a escutar na porta {listenPort}...");
 
             while (true)
             {
@@ -30,6 +34,7 @@ namespace agregators
                 var data = reader.ReadToEnd();
 
                 Console.WriteLine("Dados recebidos:\n" + data);
+                Console.WriteLine($"{connString}");
 
                 using var connection = new MySqlConnection(connString);
                 connection.Open();

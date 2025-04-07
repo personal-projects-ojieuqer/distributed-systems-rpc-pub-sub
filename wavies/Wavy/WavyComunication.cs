@@ -12,9 +12,9 @@ namespace wavies.Wavy
             string ip = "127.0.0.1";
             int port = aggregatorId switch
             {
-                "AGG_01" => 13311,
-                "AGG_02" => 13312,
-                "AGG_03" => 13313,
+                "AGG_01" => 5001,
+                "AGG_02" => 5002,
+                "AGG_03" => 5003,
                 _ => -1
             };
 
@@ -30,7 +30,7 @@ namespace wavies.Wavy
                 await client.ConnectAsync(ip, port);
 
                 using var stream = client.GetStream();
-                string[] lines = File.ReadAllLines(csvPath).Skip(1).ToArray();
+                string[] lines = File.ReadAllLines(csvPath).Skip(1).ToArray(); // Ignora o cabeçalho do CSV
 
                 foreach (string line in lines)
                 {
@@ -42,11 +42,25 @@ namespace wavies.Wavy
                 Console.WriteLine($"[{wavyId}] Dados enviados com sucesso para {aggregatorId}.");
                 return true;
             }
+            catch (SocketException ex) when (ex.SocketErrorCode == SocketError.ConnectionRefused)
+            {
+                Console.WriteLine($"[{wavyId}] Erro: A ligação foi recusada por {aggregatorId}. Verifica se o agregador está ativo.");
+            }
+            catch (SocketException ex) when (ex.SocketErrorCode == SocketError.AddressAlreadyInUse)
+            {
+                Console.WriteLine($"[{wavyId}] Aviso: A porta {port} já está em uso. Outro WAVY pode estar ligado a {aggregatorId}.");
+            }
+            catch (SocketException ex) when (ex.SocketErrorCode == SocketError.TimedOut)
+            {
+                Console.WriteLine($"[{wavyId}] Erro: O tempo de ligação esgotou ao tentar ligar a {aggregatorId}. O agregador pode estar inativo ou sobrecarregado.");
+            }
             catch (Exception ex)
             {
-                Console.WriteLine($"{wavyId}Erro ao enviar para {aggregatorId}: {ex.Message}");
-                return false;
+                Console.WriteLine($"[{wavyId}] Erro inesperado ao enviar para {aggregatorId}: {ex.Message}");
             }
+
+            return false;
         }
     }
 }
+
