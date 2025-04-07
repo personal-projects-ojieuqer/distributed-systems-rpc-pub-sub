@@ -109,6 +109,34 @@ services:
     ports:
       - "5003:13313"
 
+
+  server_app:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: server_app
+    depends_on:
+      - agregator1
+      - agregator2
+      - agregator3
+      - server
+    environment:
+        AGG_IDS: AGG_01,AGG_02,AGG_03
+        MYSQL_HOST_AGG_01: agregator1
+        MYSQL_DB_AGG_01: agregator1_db
+        MYSQL_HOST_AGG_02: agregator2
+        MYSQL_DB_AGG_02: agregator2_db
+        MYSQL_HOST_AGG_03: agregator3
+        MYSQL_DB_AGG_03: agregator3_db
+        MYSQL_PORT: 3306
+        MYSQL_USER: root
+        MYSQL_PASS: root
+        MYSQL_HOST_SERVER: server
+        MYSQL_DB_SERVER: server-db
+    ports:
+        - "5004:13314"
+
+
 volumes:
   mysql-ag1-data:
   mysql-ag2-data:
