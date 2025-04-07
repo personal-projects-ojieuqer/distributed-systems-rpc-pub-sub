@@ -7,22 +7,22 @@ namespace agregators
 {
     internal class Program
     {
-        static void Main()
+        static void Main(string[] args)
         {
             string aggregatorId = Environment.GetEnvironmentVariable("AGGREGATOR_ID") ?? "AGG_01";
+            int port = int.Parse(Environment.GetEnvironmentVariable("LISTEN_PORT") ?? "13311");
+
             string dbHost = Environment.GetEnvironmentVariable("MYSQL_HOST") ?? "localhost";
             string dbPort = Environment.GetEnvironmentVariable("MYSQL_PORT") ?? "3306";
-            string dbName = Environment.GetEnvironmentVariable("MYSQL_DB") ?? "agregator1_db";
             string dbUser = Environment.GetEnvironmentVariable("MYSQL_USER") ?? "root";
             string dbPass = Environment.GetEnvironmentVariable("MYSQL_PASS") ?? "root";
-            string listenPortStr = Environment.GetEnvironmentVariable("LISTEN_PORT") ?? "13311";
+            string dbName = Environment.GetEnvironmentVariable("MYSQL_DB") ?? "agregator1_db";
 
-            int listenPort = int.Parse(listenPortStr);
             string connString = $"Server={dbHost};Port={dbPort};Database={dbName};Uid={dbUser};Pwd={dbPass};";
 
-            var listener = new TcpListener(IPAddress.Any, listenPort);
+            var listener = new TcpListener(IPAddress.Any, port);
             listener.Start();
-            Console.WriteLine($"{aggregatorId} a escutar na porta {listenPort}...");
+            Console.WriteLine($"{aggregatorId} a escutar na porta {port}...");
 
             while (true)
             {
@@ -31,27 +31,25 @@ namespace agregators
 
                 var stream = client.GetStream();
                 using var reader = new StreamReader(stream, Encoding.UTF8);
-                var data = reader.ReadToEnd();
-
-                Console.WriteLine("Dados recebidos:\n" + data);
-                Console.WriteLine($"{connString}");
 
                 using var connection = new MySqlConnection(connString);
                 connection.Open();
 
-                var lines = data.Split('\n', StringSplitOptions.RemoveEmptyEntries);
-                foreach (var line in lines)
+                string? line;
+                while ((line = reader.ReadLine()) != null)
                 {
+                    Console.WriteLine($"📨 Linha recebida: {line}");
+
                     var parts = line.Split(',', 3);
                     if (parts.Length == 3 && parts[0].Contains(":"))
                     {
                         var idSplit = parts[0].Split(':', 2);
                         string wavyId = idSplit[0];
-
                         string timestampRaw = idSplit[1];
-                        if (!DateTime.TryParseExact(timestampRaw, "yyyy-MM-ddTHH:mm:ss.fffffffZ", null, System.Globalization.DateTimeStyles.RoundtripKind, out DateTime timestamp))
+
+                        if (!DateTime.TryParse(timestampRaw, out DateTime timestamp))
                         {
-                            Console.WriteLine($"Timestamp inválido: {timestampRaw}");
+                            Console.WriteLine($"⛔ Timestamp inválido: {timestampRaw}");
                             continue;
                         }
 
@@ -66,16 +64,19 @@ namespace agregators
                         cmd.Parameters.AddWithValue("@sensor", sensor);
                         cmd.Parameters.AddWithValue("@value", value);
 
-                        Console.WriteLine($"INSERT: {wavyId} | {timestamp} | {sensor} | {value}");
-
                         try
                         {
                             cmd.ExecuteNonQuery();
+                            Console.WriteLine($"✅ INSERT: {wavyId} | {timestamp} | {sensor} | {value}");
                         }
                         catch (Exception ex)
                         {
-                            Console.WriteLine($"ERRO ao inserir no MySQL: {ex.Message}");
+                            Console.WriteLine($"❌ ERRO ao inserir no MySQL: {ex.Message}");
                         }
+                    }
+                    else
+                    {
+                        Console.WriteLine("⚠️ Linha ignorada (formato inválido).");
                     }
                 }
 

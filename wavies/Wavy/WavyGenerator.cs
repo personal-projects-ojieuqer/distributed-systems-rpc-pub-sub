@@ -44,6 +44,7 @@
         }
 
 
+        static List<WavyRunner> ativos = new();
         public static void AdicionarWavies()
         {
             Console.Write("Quantos WAVIES queres adicionar? ");
@@ -53,35 +54,26 @@
                 return;
             }
 
-            WavyGenerator.GenerateWavies(count);
+            string folder = GetWaviesFolderPath();
+            GenerateWavies(count);
 
-            var cts = new CancellationTokenSource();
-            Console.CancelKeyPress += (s, e) =>
-            {
-                Console.WriteLine("\nCancelamento pedido! A terminar geradores...");
-                e.Cancel = true;
-                cts.Cancel();
-            };
-
-            var tasks = new List<Task>();
             for (int i = 1; i <= count; i++)
             {
                 string wavyId = $"WAVY_{i:D3}";
-                Console.WriteLine($"A iniciar tarefa para {wavyId}...");
-                string folder = WavyGenerator.GetWaviesFolderPath();
-                tasks.Add(WavyGenerator.SimulateMultiSensorData(wavyId, folder, cts.Token));
+                string configPath = Path.Combine(folder, "wavy_config.csv");
+                string aggregatorId = WavyManager.GetAggregatorFromConfig(wavyId, configPath);
+
+                var runner = new WavyRunner(wavyId, folder, aggregatorId);
+                runner.Start();
+                ativos.Add(runner);
             }
 
-            try
+            Console.CancelKeyPress += (s, e) =>
             {
-                Task.WaitAll(tasks.ToArray());
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Erro geral: {ex.Message}");
-            }
-
-            Console.WriteLine("Todos os WAVIES terminaram.");
+                Console.WriteLine("Cancelamento recebido, a terminar WAVIES...");
+                foreach (var r in ativos) r.Stop();
+                e.Cancel = true;
+            };
         }
 
 
@@ -131,7 +123,7 @@
                         await Task.Delay(5000, cancellationToken);
                     }
                 }
-                catch (Exception ex) { Console.WriteLine($"❌ Temperature [{wavyId}]: {ex.Message}"); }
+                catch (Exception ex) { Console.WriteLine($"Temperature [{wavyId}]: {ex.Message}"); }
             }));
 
             tasks.Add(Task.Run(async () =>
@@ -212,24 +204,6 @@
 
             await Task.WhenAll(tasks);
         }
-
-
-
-
-
-        //static void DeleteCsvFiles(string folderPath)
-        //{
-        //    if (Directory.Exists(folderPath))
-        //    {
-        //        var files = Directory.GetFiles(folderPath, "WAVY_*.csv");
-        //        foreach (var file in files)
-        //        {
-        //            File.Delete(file);
-        //            Console.WriteLine($"Apagado: {Path.GetFileName(file)}");
-        //        }
-        //    }
-        //}
-
 
         public static void EliminarWavies()
         {
