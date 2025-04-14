@@ -10,6 +10,7 @@ public class WavyRunner
 
     private bool stopRequested = false;
 
+    public string WavyId { get; }
     public WavyRunner(string wavyId, string folderPath, string aggregatorId)
     {
         this.wavyId = wavyId;
@@ -106,23 +107,40 @@ public class WavyRunner
             fileMutex.WaitOne();
             try
             {
-                lines = File.ReadAllLines(csvPath).Skip(1).ToArray(); // ignora header
+                if (!File.Exists(csvPath))
+                {
+                    Console.WriteLine($"{wavyId}: CSV não encontrado. Aguardando novo ciclo.");
+                    Thread.Sleep(3000);
+                    continue;
+                }
+
+                lines = File.ReadAllLines(csvPath).Skip(1).ToArray();
                 File.WriteAllText(csvPath, "Timestamp,SensorType,Value\n"); // reset
             }
             finally { fileMutex.ReleaseMutex(); }
 
             foreach (var line in lines)
             {
-                string message = $"{wavyId}:{line}";
                 try
                 {
                     using TcpClient client = new();
                     client.Connect("127.0.0.1", GetPort(aggregatorId));
                     using var stream = client.GetStream();
-                    byte[] data = Encoding.UTF8.GetBytes(message + "\n");
-                    stream.Write(data, 0, data.Length);
+                    using var writer = new StreamWriter(stream, Encoding.UTF8) { AutoFlush = true };
 
-                    Console.WriteLine($"[{wavyId}] Enviado para {aggregatorId}: {line}");
+                    // Envia mensagem de início
+                    writer.WriteLine($"START:{wavyId}");
+
+                    foreach (var dataLine in lines)
+                    {
+                        string message = $"{wavyId}:{dataLine}";
+                        writer.WriteLine(message);
+                    }
+
+                    // Envia mensagem de fim
+                    writer.WriteLine($"END:{wavyId}");
+
+                    Console.WriteLine($"[{wavyId}] Envio completo para {aggregatorId}.");
                 }
                 catch (Exception ex)
                 {

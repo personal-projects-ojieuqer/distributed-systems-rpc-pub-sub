@@ -72,6 +72,8 @@ services:
       LISTEN_PORT: 13311
     ports:
       - "5001:13311"
+    volumes:
+      - ./agregators/autorizacoes:/app/autorizacoes
 
   agregator_app_2:
     build: 
@@ -90,6 +92,8 @@ services:
       LISTEN_PORT: 13312
     ports:
       - "5002:13312"
+    volumes:
+      - ./agregators/autorizacoes:/app/autorizacoes
 
   agregator_app_3:
     build: 
@@ -108,7 +112,8 @@ services:
       LISTEN_PORT: 13313
     ports:
       - "5003:13313"
-
+    volumes:
+      - ./agregators/autorizacoes:/app/autorizacoes
 
   server_app:
     build:
@@ -133,6 +138,9 @@ services:
         MYSQL_PASS: root
         MYSQL_HOST_SERVER: server
         MYSQL_DB_SERVER: server-db
+        AGG_TOKEN_AGG_01: tokenagr1
+        AGG_TOKEN_AGG_02: tokenagr2
+        AGG_TOKEN_AGG_03: tokenagr3
     ports:
         - "5004:13314"
 

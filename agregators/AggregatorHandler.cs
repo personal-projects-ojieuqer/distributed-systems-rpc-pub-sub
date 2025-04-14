@@ -1,71 +1,113 @@
-﻿//using MySql.Data.MySqlClient;
-//using System.Net.Sockets;
-//using System.Text;
+﻿using MySql.Data.MySqlClient;
+using System.Net.Sockets;
+using System.Text;
 
-//namespace agregators
-//{
-//    public static class AggregatorHandler
-//    {
-//        private static readonly object dbLock = new();
+namespace agregators
+{
+    public static class AggregatorHandler
+    {
+        private static readonly object dbLock = new();
 
-//        private const string CONNECTION_STRING = "server=localhost;port=3311;user=root;password=root;database=agregator1-db;";
+        public static void HandleClient(TcpClient client, string connString, string aggregatorId)
+        {
+            try
+            {
+                string authFile = Path.Combine("autorizacoes", $"{aggregatorId}.txt");
+                HashSet<string> autorizados = File.Exists(authFile)
+                    ? new HashSet<string>(File.ReadAllLines(authFile))
+                    : new HashSet<string>();
 
-//        public static void HandleClient(TcpClient client)
-//        {
-//            try
-//            {
-//                using NetworkStream stream = client.GetStream();
-//                using StreamReader reader = new StreamReader(stream, Encoding.UTF8);
+                HashSet<string> avisados = new(); // Para não repetir autorização
 
-//                string? line;
-//                while ((line = reader.ReadLine()) != null)
-//                {
-//                    Console.WriteLine($"Recebido: {line}");
-//                    ProcessLineToDatabase(line);
-//                }
+                using var stream = client.GetStream();
+                using var reader = new StreamReader(stream, Encoding.UTF8);
 
-//                Console.WriteLine("Ligação terminada.");
-//                client.Close();
-//            }
-//            catch (Exception ex)
-//            {
-//                Console.WriteLine($"Erro no cliente: {ex.Message}");
-//            }
-//        }
+                string? line;
+                while ((line = reader.ReadLine()) != null)
+                {
+                    Console.WriteLine($"Linha recebida: {line}");
 
-//        private static void ProcessLineToDatabase(string line)
-//        {
-//            try
-//            {
-//                var parts = line.Split(',');
-//                if (parts.Length < 4) return;
+                    if (line.StartsWith("START:"))
+                    {
+                        string wavyStart = line.Split(':')[1];
+                        Console.WriteLine($"🟢  INÍCIO de envio de {wavyStart}");
+                        continue;
+                    }
 
-//                string wavyId = parts[0];
-//                string timestamp = parts[1];
-//                string sensor = parts[2];
-//                string value = parts[3];
+                    if (line.StartsWith("END:"))
+                    {
+                        string wavyEnd = line.Split(':')[1];
+                        Console.WriteLine($"🔴  FIM de envio de {wavyEnd}");
+                        continue;
+                    }
 
-//                lock (dbLock)
-//                {
-//                    using var conn = new MySqlConnection(CONNECTION_STRING);
-//                    conn.Open();
+                    var parts = line.Split(',', 3);
+                    if (parts.Length == 3 && parts[0].Contains(":"))
+                    {
+                        var idSplit = parts[0].Split(':', 2);
+                        string wavyId = idSplit[0];
+                        string timestampRaw = idSplit[1];
 
-//                    string sql = @"INSERT INTO sensor_data (wavy_id, timestamp, sensor, value)
-//                                   VALUES (@wavy_id, @timestamp, @sensor, @value)";
-//                    using var cmd = new MySqlCommand(sql, conn);
-//                    cmd.Parameters.AddWithValue("@wavy_id", wavyId);
-//                    cmd.Parameters.AddWithValue("@timestamp", DateTime.Parse(timestamp));
-//                    cmd.Parameters.AddWithValue("@sensor", sensor);
-//                    cmd.Parameters.AddWithValue("@value", value);
-//                    cmd.ExecuteNonQuery();
+                        if (!avisados.Contains(wavyId))
+                        {
+                            if (autorizados.Contains(wavyId))
+                                Console.WriteLine($"{wavyId} está autorizado a comunicar com {aggregatorId}.");
+                            else
+                                Console.WriteLine($"{wavyId} NÃO está autorizado a comunicar com {aggregatorId}.");
 
-//                    conn.Close();
-//                }
-//            }
-//            catch (Exception ex)
-//            {
-//                Console.WriteLine($"Erro ao inserir na BD: {ex.Message}");
-//            }
-//        }
-//    }
-//}
+                            avisados.Add(wavyId);
+                        }
+
+                        if (!autorizados.Contains(wavyId)) continue;
+
+                        if (!DateTime.TryParse(timestampRaw, out DateTime timestamp))
+                        {
+                            Console.WriteLine($"⚠Timestamp inválido: {timestampRaw}");
+                            continue;
+                        }
+
+                        string sensor = parts[1];
+                        string value = parts[2];
+
+                        lock (dbLock)
+                        {
+                            using var connection = new MySqlConnection(connString);
+                            connection.Open();
+
+                            var cmd = connection.CreateCommand();
+                            cmd.CommandText = @"INSERT INTO sensor_data (wavy_id, timestamp, sensor, value)
+                                        VALUES (@wavy_id, @timestamp, @sensor, @value)";
+                            cmd.Parameters.AddWithValue("@wavy_id", wavyId);
+                            cmd.Parameters.AddWithValue("@timestamp", timestamp);
+                            cmd.Parameters.AddWithValue("@sensor", sensor);
+                            cmd.Parameters.AddWithValue("@value", value);
+
+                            try
+                            {
+                                cmd.ExecuteNonQuery();
+                                Console.WriteLine($"{aggregatorId} recebeu de {wavyId} → {sensor}: {value}");
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"ERRO ao inserir no MySQL: {ex.Message}");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("Linha ignorada (formato inválido).");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Erro na thread do cliente: {ex.Message}");
+            }
+            finally
+            {
+                client.Close();
+                Console.WriteLine("Cliente desconectado.");
+            }
+        }
+    }
+}
