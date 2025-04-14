@@ -10,6 +10,7 @@ public class WavyRunner
 
     private bool stopRequested = false;
 
+    public string WavyId { get; }
     public WavyRunner(string wavyId, string folderPath, string aggregatorId)
     {
         this.wavyId = wavyId;
@@ -106,7 +107,14 @@ public class WavyRunner
             fileMutex.WaitOne();
             try
             {
-                lines = File.ReadAllLines(csvPath).Skip(1).ToArray(); // ignora header
+                if (!File.Exists(csvPath))
+                {
+                    Console.WriteLine($"{wavyId}: CSV não encontrado. Aguardando novo ciclo.");
+                    Thread.Sleep(3000);
+                    continue;
+                }
+
+                lines = File.ReadAllLines(csvPath).Skip(1).ToArray();
                 File.WriteAllText(csvPath, "Timestamp,SensorType,Value\n"); // reset
             }
             finally { fileMutex.ReleaseMutex(); }

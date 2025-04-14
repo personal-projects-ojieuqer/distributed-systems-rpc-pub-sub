@@ -8,7 +8,7 @@ class Program
 
     static void Main()
     {
-        Console.WriteLine("🛰️ Servidor iniciado e pronto para sincronizar com múltiplos agregadores.");
+        Console.WriteLine("Servidor iniciado e pronto para sincronizar com múltiplos agregadores.");
 
         // Carrega as configs dos agregadores a partir das env vars
         string[] aggregators = Environment.GetEnvironmentVariable("AGG_IDS")!.Split(',');
@@ -87,14 +87,14 @@ class Program
                 }
 
                 lastSyncTimestamps[aggId] = maxTimestamp;
-                Console.WriteLine($"✅ [{aggId}] Sync completa até {maxTimestamp:HH:mm:ss}");
+                Console.WriteLine($"[{aggId}] Sync completa até {maxTimestamp:HH:mm:ss}");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ [{aggId}] Erro: {ex.Message}");
+                Console.WriteLine($"[{aggId}] Erro: {ex.Message}");
             }
 
-            Thread.Sleep(10000);
+            Thread.Sleep(1000000);
         }
     }
 }

@@ -24,6 +24,12 @@ services:
         target: 13311
         published: "5001"
         protocol: tcp
+    volumes:
+      - type: bind
+        source: C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP1\sd-al79138-al79229-al79908\agregators\autorizacoes
+        target: /app/autorizacoes
+        bind:
+          create_host_path: true
   agregator_app_2:
     build:
       context: C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP1\sd-al79138-al79229-al79908\agregators
@@ -48,6 +54,12 @@ services:
         target: 13312
         published: "5002"
         protocol: tcp
+    volumes:
+      - type: bind
+        source: C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP1\sd-al79138-al79229-al79908\agregators\autorizacoes
+        target: /app/autorizacoes
+        bind:
+          create_host_path: true
   agregator_app_3:
     build:
       context: C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP1\sd-al79138-al79229-al79908\agregators
@@ -72,6 +84,12 @@ services:
         target: 13313
         published: "5003"
         protocol: tcp
+    volumes:
+      - type: bind
+        source: C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP1\sd-al79138-al79229-al79908\agregators\autorizacoes
+        target: /app/autorizacoes
+        bind:
+          create_host_path: true
   agregator1:
     container_name: mysql_agregator1
     environment:
