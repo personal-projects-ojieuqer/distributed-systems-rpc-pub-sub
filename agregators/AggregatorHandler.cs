@@ -17,7 +17,7 @@ namespace agregators
                     ? new HashSet<string>(File.ReadAllLines(authFile))
                     : new HashSet<string>();
 
-                HashSet<string> avisados = new(); // Regista os wavies já verificados nesta sessão
+                HashSet<string> avisados = new(); // Para não repetir autorização
 
                 using var stream = client.GetStream();
                 using var reader = new StreamReader(stream, Encoding.UTF8);
@@ -27,6 +27,20 @@ namespace agregators
                 {
                     Console.WriteLine($"Linha recebida: {line}");
 
+                    if (line.StartsWith("START:"))
+                    {
+                        string wavyStart = line.Split(':')[1];
+                        Console.WriteLine($"🟢  INÍCIO de envio de {wavyStart}");
+                        continue;
+                    }
+
+                    if (line.StartsWith("END:"))
+                    {
+                        string wavyEnd = line.Split(':')[1];
+                        Console.WriteLine($"🔴  FIM de envio de {wavyEnd}");
+                        continue;
+                    }
+
                     var parts = line.Split(',', 3);
                     if (parts.Length == 3 && parts[0].Contains(":"))
                     {
@@ -34,7 +48,6 @@ namespace agregators
                         string wavyId = idSplit[0];
                         string timestampRaw = idSplit[1];
 
-                        // Verificação da autorização apenas uma vez por WAVY
                         if (!avisados.Contains(wavyId))
                         {
                             if (autorizados.Contains(wavyId))
@@ -49,7 +62,7 @@ namespace agregators
 
                         if (!DateTime.TryParse(timestampRaw, out DateTime timestamp))
                         {
-                            Console.WriteLine($"Timestamp inválido: {timestampRaw}");
+                            Console.WriteLine($"⚠Timestamp inválido: {timestampRaw}");
                             continue;
                         }
 
@@ -63,7 +76,7 @@ namespace agregators
 
                             var cmd = connection.CreateCommand();
                             cmd.CommandText = @"INSERT INTO sensor_data (wavy_id, timestamp, sensor, value)
-                                                VALUES (@wavy_id, @timestamp, @sensor, @value)";
+                                        VALUES (@wavy_id, @timestamp, @sensor, @value)";
                             cmd.Parameters.AddWithValue("@wavy_id", wavyId);
                             cmd.Parameters.AddWithValue("@timestamp", timestamp);
                             cmd.Parameters.AddWithValue("@sensor", sensor);
@@ -72,7 +85,7 @@ namespace agregators
                             try
                             {
                                 cmd.ExecuteNonQuery();
-                                Console.WriteLine($"INSERT: {wavyId} | {timestamp} | {sensor} | {value}");
+                                Console.WriteLine($"{aggregatorId} recebeu de {wavyId} → {sensor}: {value}");
                             }
                             catch (Exception ex)
                             {

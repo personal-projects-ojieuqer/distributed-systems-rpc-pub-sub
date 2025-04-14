@@ -48,9 +48,11 @@ class Program
             {
                 if (!ValidateAggregatorToken(aggId, handshake))
                 {
-                    Console.WriteLine($"❌ Token inválido para {aggId}. Sincronização recusada.");
+                    Console.WriteLine($"Token inválido para {aggId}. Sincronização recusada.");
                     return;
                 }
+
+                Console.WriteLine($"Token Válido para {aggId}. Sincronização Aceite.");
 
                 using var aggConn = new MySqlConnection(aggConnStr);
                 aggConn.Open();
@@ -79,7 +81,7 @@ class Program
 
                         if (string.IsNullOrWhiteSpace(wavyId) || string.IsNullOrWhiteSpace(sensor) || string.IsNullOrWhiteSpace(value))
                         {
-                            Console.WriteLine($"[{aggId}] ⚠️ Ignorado dado inválido (campos em branco)");
+                            Console.WriteLine($"[{aggId}] Ignorado dado inválido (campos em branco)");
                             continue;
                         }
 
@@ -107,16 +109,16 @@ class Program
                     }
                     catch (Exception exInner)
                     {
-                        Console.WriteLine($"[{aggId}] ⚠️ Erro ao processar registo: {exInner.Message}");
+                        Console.WriteLine($"[{aggId}] Erro ao processar registo: {exInner.Message}");
                     }
                 }
 
                 lastSyncTimestamps[aggId] = maxTimestamp;
-                Console.WriteLine($"[{aggId}] ✅ {registrosSincronizados} registos sincronizados até {maxTimestamp:HH:mm:ss}");
+                Console.WriteLine($"[{aggId}] {registrosSincronizados} registos novos recebidos até {maxTimestamp:HH:mm:ss}");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[{aggId}] ❌ Erro geral de sincronização: {ex.Message}");
+                Console.WriteLine($"[{aggId}] Erro geral de sincronização: {ex.Message}");
             }
 
             Thread.Sleep(10000); // Sincroniza de 10 em 10 segundos
