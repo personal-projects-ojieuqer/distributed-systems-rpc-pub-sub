@@ -12,11 +12,12 @@ namespace agregators
         {
             try
             {
-                // Carregar os WAVIES autorizados deste agregador
                 string authFile = Path.Combine("autorizacoes", $"{aggregatorId}.txt");
                 HashSet<string> autorizados = File.Exists(authFile)
                     ? new HashSet<string>(File.ReadAllLines(authFile))
                     : new HashSet<string>();
+
+                HashSet<string> avisados = new(); // Regista os wavies já verificados nesta sessão
 
                 using var stream = client.GetStream();
                 using var reader = new StreamReader(stream, Encoding.UTF8);
@@ -33,13 +34,18 @@ namespace agregators
                         string wavyId = idSplit[0];
                         string timestampRaw = idSplit[1];
 
-                        // 🔐 Validação do WAVY
-                        if (!autorizados.Contains(wavyId))
+                        // Verificação da autorização apenas uma vez por WAVY
+                        if (!avisados.Contains(wavyId))
                         {
-                            Console.WriteLine($"WAVY {wavyId} NÃO está autorizado a comunicar com {aggregatorId}.");
-                            continue;
+                            if (autorizados.Contains(wavyId))
+                                Console.WriteLine($"{wavyId} está autorizado a comunicar com {aggregatorId}.");
+                            else
+                                Console.WriteLine($"{wavyId} NÃO está autorizado a comunicar com {aggregatorId}.");
+
+                            avisados.Add(wavyId);
                         }
 
+                        if (!autorizados.Contains(wavyId)) continue;
 
                         if (!DateTime.TryParse(timestampRaw, out DateTime timestamp))
                         {
@@ -47,7 +53,6 @@ namespace agregators
                             continue;
                         }
 
-                        Console.WriteLine($"WAVY {wavyId} está autorizado a comunicar com {aggregatorId}.");
                         string sensor = parts[1];
                         string value = parts[2];
 

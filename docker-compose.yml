@@ -138,6 +138,9 @@ services:
         MYSQL_PASS: root
         MYSQL_HOST_SERVER: server
         MYSQL_DB_SERVER: server-db
+        AGG_TOKEN_AGG_01: tokenagr1
+        AGG_TOKEN_AGG_02: tokenagr2
+        AGG_TOKEN_AGG_03: tokenagr3
     ports:
         - "5004:13314"
 

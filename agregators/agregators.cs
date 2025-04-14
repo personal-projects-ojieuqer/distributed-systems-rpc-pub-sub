@@ -10,6 +10,7 @@ namespace agregators
             string aggregatorId = Environment.GetEnvironmentVariable("AGGREGATOR_ID") ?? "AGG_01";
             int port = int.Parse(Environment.GetEnvironmentVariable("LISTEN_PORT") ?? "13311");
 
+
             string dbHost = Environment.GetEnvironmentVariable("MYSQL_HOST") ?? "localhost";
             string dbPort = Environment.GetEnvironmentVariable("MYSQL_PORT") ?? "3306";
             string dbUser = Environment.GetEnvironmentVariable("MYSQL_USER") ?? "root";
@@ -25,7 +26,7 @@ namespace agregators
             while (true)
             {
                 var client = listener.AcceptTcpClient();
-                Console.WriteLine("Conexão recebida!");
+                //Console.WriteLine("Conexão recebida!");
 
                 // Cada conexão é processada numa thread separada
                 _ = Task.Run(() => AggregatorHandler.HandleClient(client, connString, aggregatorId));
