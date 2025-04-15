@@ -148,7 +148,7 @@ public class WavyRunner
                 }
             }
 
-            Console.WriteLine($"\n\n[{wavyId}] Envio completo de {lines.Length} linhas para {aggregatorId}.");
+            Console.WriteLine($"\n\n[{wavyId}] Envio completo de bloco com {lines.Length} linhas para {aggregatorId}.");
         }
     }
 

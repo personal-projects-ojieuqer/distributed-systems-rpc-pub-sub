@@ -62,7 +62,7 @@ namespace agregators
 
                         if (!DateTime.TryParse(timestampRaw, out DateTime timestamp))
                         {
-                            Console.WriteLine($"⚠Timestamp inválido: {timestampRaw}");
+                            Console.WriteLine($"Timestamp inválido: {timestampRaw}");
                             continue;
                         }
 
@@ -85,7 +85,7 @@ namespace agregators
                             try
                             {
                                 cmd.ExecuteNonQuery();
-                                Console.WriteLine($"{aggregatorId} recebeu de {wavyId} → {sensor}: {value}");
+                                Console.WriteLine($"{aggregatorId} recebeu de {wavyId} : {sensor}: {value}");
                             }
                             catch (Exception ex)
                             {

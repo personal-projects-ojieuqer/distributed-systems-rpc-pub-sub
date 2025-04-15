@@ -174,22 +174,6 @@
 
             // Salvar todos no final
             File.WriteAllLines(configPath, configLines);
-
-            Console.WriteLine($"\nA iniciar {novosWavies.Count} WAVIES agora...\n");
-
-            foreach (var (wavyId, aggregatorId) in novosWavies)
-            {
-                var runner = new WavyRunner(wavyId, folderPath, aggregatorId);
-                runner.Start();
-                ativos.Add(runner);
-            }
-
-            Console.CancelKeyPress += (s, e) =>
-            {
-                Console.WriteLine("Cancelamento recebido, a terminar WAVIES...");
-                foreach (var r in ativos) r.Stop();
-                e.Cancel = true;
-            };
         }
 
         public static void EliminarWavies()

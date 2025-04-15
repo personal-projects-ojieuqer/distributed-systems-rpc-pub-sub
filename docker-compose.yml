@@ -70,6 +70,7 @@ services:
       MYSQL_USER: root
       MYSQL_PASS: root
       LISTEN_PORT: 13311
+      AGG_TOKEN_AGG_01: tokenagr1
     ports:
       - "5001:13311"
     volumes:
@@ -90,6 +91,7 @@ services:
       MYSQL_USER: root
       MYSQL_PASS: root
       LISTEN_PORT: 13312
+      AGG_TOKEN_AGG_03: tokenagr2
     ports:
       - "5002:13312"
     volumes:
@@ -110,6 +112,7 @@ services:
       MYSQL_USER: root
       MYSQL_PASS: root
       LISTEN_PORT: 13313
+      AGG_TOKEN_AGG_03: tokenagr3
     ports:
       - "5003:13313"
     volumes:
@@ -126,6 +129,7 @@ services:
       - agregator3
       - server
     environment:
+        SERVER_PORT: 15000
         AGG_IDS: AGG_01,AGG_02,AGG_03
         MYSQL_HOST_AGG_01: agregator1
         MYSQL_DB_AGG_01: agregator1_db
@@ -142,7 +146,7 @@ services:
         AGG_TOKEN_AGG_02: tokenagr2
         AGG_TOKEN_AGG_03: tokenagr3
     ports:
-        - "5004:13314"
+        - "5004:15000"
 
 
 volumes:
