@@ -91,7 +91,7 @@ services:
       MYSQL_USER: root
       MYSQL_PASS: root
       LISTEN_PORT: 13312
-      AGG_TOKEN_AGG_03: tokenagr2
+      AGG_TOKEN_AGG_03: tokenagr2 
     ports:
       - "5002:13312"
     volumes:
