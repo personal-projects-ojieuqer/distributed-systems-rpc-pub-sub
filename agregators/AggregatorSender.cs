@@ -3,28 +3,26 @@ using System.Net.Sockets;
 using System.Text;
 
 /// <summary>
-/// Classe responsável por enviar os dados recolhidos pelo agregador para o servidor central.
+/// Classe responsável por enviar dados de um agregador para o servidor central via TCP.
 /// </summary>
 public static class AggregatorSender
 {
     /// <summary>
-    /// Envia os dados registados localmente (na base de dados do agregador) para o servidor central via TCP.
-    /// Os dados enviados são aqueles que foram registados após a última sincronização (últimos 60 segundos).
-    /// Inclui o envio de um handshake com token para autenticação, seguido dos dados formatados.
+    /// Envia dados do agregador para o servidor central. Apenas dados registados após o último minuto serão enviados.
     /// </summary>
     /// <param name="aggregatorId">Identificador do agregador.</param>
     /// <param name="localConnStr">String de ligação à base de dados local do agregador.</param>
-    /// <param name="servidorIp">Endereço IP do servidor central (não utilizado diretamente neste exemplo).</param>
-    /// <param name="servidorPorta">Porta TCP na qual o servidor central está a escutar.</param>
-    public static void EnviarDadosParaServidor(string aggregatorId, string localConnStr, string servidorIp, int servidorPorta)
+    /// <param name="servidorIp">Endereço IP ou hostname do servidor central.</param>
+    /// <param name="servidorPorta">Porta do servidor onde o serviço está a escutar.</param>
+    public static async Task EnviarDadosParaServidorAsync(string aggregatorId, string localConnStr, string servidorIp, int servidorPorta)
     {
         try
         {
-            // Estabelece ligação à base de dados local do agregador
+            // Abre ligação à base de dados local
             using var conn = new MySqlConnection(localConnStr);
-            conn.Open();
+            await conn.OpenAsync();
 
-            // Define o intervalo temporal para sincronização (último minuto)
+            // Define intervalo para sincronização (último minuto)
             DateTime ultimoSync = DateTime.UtcNow.AddMinutes(-1);
             string query = @"SELECT wavy_id, timestamp, sensor, value 
                              FROM sensor_data 
@@ -34,62 +32,62 @@ public static class AggregatorSender
             using var cmd = new MySqlCommand(query, conn);
             cmd.Parameters.AddWithValue("@lastSync", ultimoSync);
 
-            using var reader = cmd.ExecuteReader();
+            using var reader = await cmd.ExecuteReaderAsync();
             var linhasParaEnviar = new List<string>();
 
-            // Extrai os registos e formata para envio
-            while (reader.Read())
+            // Recolhe todos os registos novos desde a última sincronização
+            while (await reader.ReadAsync())
             {
                 string wavyId = reader.GetString(0);
                 DateTime timestamp = reader.GetDateTime(1);
                 string sensor = reader.GetString(2);
                 string value = reader.GetString(3);
 
-                // Formato: agregador,wavy,timestamp,sensor,valor
+                // Formata os dados para envio
                 string linha = $"{aggregatorId},{wavyId},{timestamp:o},{sensor},{value}";
                 linhasParaEnviar.Add(linha);
             }
 
-            // Caso não haja novos dados, informa e termina
             if (linhasParaEnviar.Count == 0)
             {
                 Console.WriteLine($"[AGGREGADOR {aggregatorId}] Nenhum dado novo para enviar.");
-                return;
+                return; // Nada para enviar, termina aqui
             }
 
-            // Lê o token necessário para autenticação com o servidor (definido como variável de ambiente)
+            // Obtém o token de autenticação do agregador a partir da variável de ambiente
             string token = Environment.GetEnvironmentVariable($"AGG_TOKEN_{aggregatorId}") ?? "";
             if (string.IsNullOrEmpty(token))
             {
                 Console.WriteLine($"[AGGREGADOR {aggregatorId}] Token não encontrado. A abortar o envio.");
-                return;
+                return; // Sem token, não prossegue
             }
 
-            // Estabelece ligação com o servidor central via TCP
-            using TcpClient client = new TcpClient();
-            client.Connect("server_app", servidorPorta); // "server_app" é o nome DNS ou IP do servidor
+            using TcpClient client = new();
+            await client.ConnectAsync("server_app", servidorPorta); // Liga-se ao servidor
 
             using var stream = client.GetStream();
             using var writer = new StreamWriter(stream, Encoding.UTF8) { AutoFlush = true };
 
-            // Envia handshake com token e marca o início da transmissão
-            writer.WriteLine($"HANDSHAKE:{aggregatorId}:{token}");
-            writer.WriteLine($"START:{aggregatorId}");
+            // Realiza handshake com o servidor para autenticação
+            await writer.WriteLineAsync($"HANDSHAKE:{aggregatorId}:{token}");
 
-            // Envia cada linha de dados
+            // Inicia transmissão
+            await writer.WriteLineAsync($"START:{aggregatorId}");
+
+            // Envia todos os dados linha a linha
             foreach (var linha in linhasParaEnviar)
             {
-                writer.WriteLine(linha);
+                await writer.WriteLineAsync(linha);
             }
 
-            // Marca o fim da transmissão
-            writer.WriteLine($"END:{aggregatorId}");
+            // Finaliza transmissão
+            await writer.WriteLineAsync($"END:{aggregatorId}");
 
             Console.WriteLine($"[AGGREGADOR {aggregatorId}] Enviados {linhasParaEnviar.Count} registos ao servidor.");
         }
         catch (Exception ex)
         {
-            // Em caso de erro, escreve mensagem no log
+            // Tratamento de erros de forma simples com mensagem no terminal
             Console.WriteLine($"[AGGREGADOR {aggregatorId}] Erro ao enviar dados: {ex.Message}");
         }
     }
