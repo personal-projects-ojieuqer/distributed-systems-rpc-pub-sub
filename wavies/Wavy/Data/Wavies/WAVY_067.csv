@@ -1,0 +1,3 @@
+Timestamp,SensorType,Value
+2025-04-16T18:39:52.0407931Z,Accelerometer,"X:-0,15,Y:9,80,Z:0,06"
+2025-04-16T18:39:52.1009556Z,Gyroscope,"X:0,06,Y:0,04,Z:0,08"
