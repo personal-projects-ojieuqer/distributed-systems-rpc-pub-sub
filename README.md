@@ -33,7 +33,7 @@ This project simulates a **distributed sensor ecosystem** — composed of WAVY s
 ---
 
 - **WAVY**: simulates sensors (temperature, accelerometer, gyroscope, hydrophones)
-- **Aggregators**: receive data from WAVIES, store it locally, and synchronize with the central server
+- **Aggregators**: receive data from WAVIES, store it locally, and centralize the data in the central server
 - **Central Server**: collects and centralizes data from all aggregators
 
 ---
