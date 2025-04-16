@@ -1,7 +1,17 @@
 ﻿namespace Wavies.Wavy
 {
+    /// <summary>
+    /// Classe responsável por apresentar uma explicação detalhada sobre o funcionamento do projeto.
+    /// A explicação inclui descrição dos componentes, objetivos e funcionalidades do sistema.
+    /// </summary>
     public class ProjectExplanation
     {
+        /// <summary>
+        /// Apresenta no ecrã uma explicação completa sobre o funcionamento do projeto de Sistemas Distribuídos.
+        /// Inclui informações sobre os autores, arquitetura do sistema (WAVIES, Agregadores, Servidor Central),
+        /// funcionalidades disponíveis no menu principal, tecnologias utilizadas (como Docker e MySQL)
+        /// e os objetivos académicos atingidos.
+        /// </summary>
         public static void Explicacao()
         {
             Console.Clear();
