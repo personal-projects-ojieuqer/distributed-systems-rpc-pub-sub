@@ -4,84 +4,82 @@ using System.Net.Sockets;
 using System.Text;
 
 /// <summary>
-/// Classe principal do servidor que escuta conexões TCP de agregadores,
-/// realiza validação através de handshake e armazena os dados recebidos numa base de dados MySQL central.
+/// Classe principal que representa o servidor TCP que escuta ligações de agregadores e armazena os dados recebidos numa base de dados MySQL.
 /// </summary>
 class Program
 {
-    // Objeto de bloqueio para evitar acesso simultâneo à base de dados central
-    private static readonly object centralDbLock = new();
+    // Semáforo utilizado para controlar o acesso concorrente à base de dados
+    private static readonly SemaphoreSlim dbSemaphore = new(1, 1);
+
     // String de ligação à base de dados central
     private static string centralConnStr = string.Empty;
 
     /// <summary>
-    /// Método principal que inicializa o servidor TCP, configura a string de ligação à base de dados MySQL
-    /// e começa a escutar ligações de agregadores.
+    /// Ponto de entrada do programa. Inicializa o servidor TCP e começa a escutar ligações de agregadores.
     /// </summary>
-    static void Main()
+    static async Task Main()
     {
         Console.WriteLine("Servidor iniciado e pronto para receber dados dos agregadores via TCP.");
 
-        // Lê variáveis de ambiente para configurar a ligação à base de dados central
+        // Obtém variáveis de ambiente para configurar a string de ligação
         string mysqlPort = Environment.GetEnvironmentVariable("MYSQL_PORT")!;
         string mysqlUser = Environment.GetEnvironmentVariable("MYSQL_USER")!;
         string mysqlPass = Environment.GetEnvironmentVariable("MYSQL_PASS")!;
         string centralHost = Environment.GetEnvironmentVariable("MYSQL_HOST_SERVER")!;
         string centralDb = Environment.GetEnvironmentVariable("MYSQL_DB_SERVER")!;
 
-        // Monta a connection string
-        centralConnStr = $"Server={centralHost};Port={mysqlPort};Database={centralDb};Uid={mysqlUser};Pwd={mysqlPass};";
+        // Monta a string de ligação à base de dados
+        centralConnStr = $"Server={centralHost};Port={mysqlPort};Database={centralDb};Uid={mysqlUser};Pwd={mysqlPass};Pooling=true;Min Pool Size=0;Max Pool Size=100;";
 
-        // Lê a porta onde o servidor irá escutar (default: 15000)
+        // Porta onde o servidor irá escutar as ligações
         int port = int.Parse(Environment.GetEnvironmentVariable("SERVER_PORT") ?? "15000");
 
-        // Cria e inicia o listener TCP
         var listener = new TcpListener(IPAddress.Any, port);
         listener.Start();
         Console.WriteLine($"[SERVIDOR] A escutar na porta {port}...");
 
-        // Ciclo infinito que aceita conexões dos agregadores
+        // Ciclo principal para aceitar novas ligações de clientes
         while (true)
         {
-            var client = listener.AcceptTcpClient();
-            _ = Task.Run(() => HandleAggregator(client));
+            var client = await listener.AcceptTcpClientAsync();
+            _ = Task.Run(() => HandleAggregatorAsync(client)); // Trata cada ligação num processo separado
         }
     }
 
     /// <summary>
-    /// Método responsável por tratar a comunicação com um agregador específico.
-    /// Valida o handshake, interpreta os dados recebidos e insere-os na base de dados central.
+    /// Trata a ligação de um agregador, processa as mensagens recebidas e insere os dados na base de dados.
     /// </summary>
-    /// <param name="client">Objeto TcpClient que representa a ligação com o agregador.</param>
-    static void HandleAggregator(TcpClient client)
+    /// <param name="client">Instância de TcpClient que representa a ligação com o agregador.</param>
+    static async Task HandleAggregatorAsync(TcpClient client)
     {
         try
         {
             using var stream = client.GetStream();
             using var reader = new StreamReader(stream, Encoding.UTF8);
             using var conn = new MySqlConnection(centralConnStr);
-            conn.Open();   // Abre a ligação à base de dados central
+            await conn.OpenAsync();
 
             string? line;
             string? currentAgg = null;
 
-            // Lê as linhas enviadas pelo agregador
-            while ((line = reader.ReadLine()) != null)
+            // Lê as mensagens linha a linha enquanto houver dados
+            while ((line = await reader.ReadLineAsync()) != null)
             {
-                // Validação do handshake
+                // Validação do handshake com token do agregador
                 if (line.StartsWith("HANDSHAKE:"))
                 {
                     var handshakeParts = line.Split(':');
                     string handshakeAggId = handshakeParts[1];
                     string receivedToken = handshakeParts[2];
 
-                    // Recupera o token esperado a partir das variáveis de ambiente
+                    // Procura o token esperado nas variáveis de ambiente
                     string? expectedToken = Environment.GetEnvironmentVariable($"AGG_TOKEN_{handshakeAggId}");
 
+                    // Verifica se o token é válido
                     if (expectedToken is null || expectedToken != receivedToken)
                     {
                         Console.WriteLine($"\nToken inválido para {handshakeAggId}. Ligação recusada.");
-                        client.Close();
+                        client.Close(); // Encerra a ligação se o token não for válido
                         return;
                     }
 
@@ -89,7 +87,7 @@ class Program
                     continue;
                 }
 
-                // Início do envio de dados
+                // Indica o início da transmissão de dados pelo agregador
                 if (line.StartsWith("START:"))
                 {
                     currentAgg = line.Split(':')[1];
@@ -97,7 +95,7 @@ class Program
                     continue;
                 }
 
-                // Fim do envio de dados
+                // Indica o fim da transmissão de dados
                 if (line.StartsWith("END:"))
                 {
                     string endAgg = line.Split(':')[1];
@@ -105,7 +103,7 @@ class Program
                     continue;
                 }
 
-                // Espera-se o formato: aggId,wavyId,timestamp,sensor,value
+                // Espera-se que os dados tenham o formato: aggId,wavyId,timestamp,sensor,value
                 var parts = line.Split(',', 5);
                 if (parts.Length != 5)
                 {
@@ -116,19 +114,21 @@ class Program
                 string aggId = parts[0];
                 string wavyId = parts[1];
 
-                // Verifica se o timestamp é válido
+                // Tenta converter o timestamp para DateTime
                 if (!DateTime.TryParse(parts[2], out var timestamp))
                 {
                     Console.WriteLine($"Timestamp inválido: {parts[2]}");
                     continue;
                 }
+
                 string sensor = parts[3];
                 string value = parts[4];
 
-                // Insere os dados na base de dados com proteção contra acessos concorrentes
-                lock (centralDbLock)
+                // Aguarda acesso exclusivo à base de dados
+                await dbSemaphore.WaitAsync();
+                try
                 {
-                    var cmd = conn.CreateCommand();
+                    using var cmd = conn.CreateCommand();
                     cmd.CommandText = @"INSERT INTO central_sensor_data (wavy_id, timestamp, sensor, value, aggregator)
                                         VALUES (@wavy_id, @timestamp, @sensor, @value, @aggregator)";
                     cmd.Parameters.AddWithValue("@wavy_id", wavyId);
@@ -136,7 +136,12 @@ class Program
                     cmd.Parameters.AddWithValue("@sensor", sensor);
                     cmd.Parameters.AddWithValue("@value", value);
                     cmd.Parameters.AddWithValue("@aggregator", aggId);
-                    cmd.ExecuteNonQuery();
+
+                    await cmd.ExecuteNonQueryAsync(); // Executa a inserção de forma assíncrona
+                }
+                finally
+                {
+                    dbSemaphore.Release(); // Liberta o semáforo para que outro processo possa aceder
                 }
 
                 Console.WriteLine($"[{aggId}] Inserido: {wavyId} | {sensor} = {value}");
@@ -148,8 +153,7 @@ class Program
         }
         finally
         {
-            // Fecha a ligação com o agregador
-            client.Close();
+            client.Close(); // Garante que a ligação seja encerrada
         }
     }
 }

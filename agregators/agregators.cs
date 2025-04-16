@@ -29,8 +29,8 @@ namespace agregators
             string serverIp = Environment.GetEnvironmentVariable("SERVER_IP") ?? "127.0.0.1";
             int serverPort = int.Parse(Environment.GetEnvironmentVariable("SERVER_PORT") ?? "15000");
 
-            // Monta a string de ligação à base de dados local do agregador
-            string connString = $"Server={dbHost};Port={dbPort};Database={dbName};Uid={dbUser};Pwd={dbPass};";
+            // Monta a string de ligação à base de dados local do agregador e configura a Thread Pool
+            string connString = $"Server={dbHost};Port={dbPort};Database={dbName};Uid={dbUser};Pwd={dbPass};Pooling=true;Min Pool Size=0;Max Pool Size=100;";
 
             var listener = new TcpListener(IPAddress.Any, listenPort);
             listener.Start();
@@ -46,7 +46,7 @@ namespace agregators
                 {
                     var client = listener.AcceptTcpClient();
                     // Cada ligação de WAVY é tratada numa nova thread
-                    _ = Task.Run(() => AggregatorHandler.HandleClient(client, connString, aggregatorId));
+                    _ = AggregatorHandler.HandleClientAsync(client, connString, aggregatorId);
                 }
             });
 
@@ -59,7 +59,7 @@ namespace agregators
                 while (true)
                 {
                     // Envia dados para o servidor central
-                    AggregatorSender.EnviarDadosParaServidor(aggregatorId, connString, serverIp, serverPort);
+                    AggregatorSender.EnviarDadosParaServidorAsync(aggregatorId, connString, serverIp, serverPort);
                     Thread.Sleep(10000); // envia de 10 em 10 segundos
                 }
             });

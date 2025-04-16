@@ -5,43 +5,43 @@ using System.Text;
 namespace agregators
 {
     /// <summary>
-    /// Classe responsável por tratar a ligação entre dispositivos WAVIES e o agregador.
-    /// Valida permissões, interpreta os dados recebidos e insere-os na base de dados local.
+    /// Classe responsável por tratar a receção de dados de clientes (wavy devices) ligados a um agregador.
     /// </summary>
     public static class AggregatorHandler
     {
+        // Objeto de bloqueio para garantir acesso exclusivo à base de dados (evita concorrência)
         private static readonly object dbLock = new();
 
         /// <summary>
-        /// Trata a comunicação com um dispositivo Wavy ligado ao agregador via TCP.
-        /// Lê os dados enviados, verifica se o dispositivo está autorizado e insere os dados na base de dados.
+        /// Processa a comunicação com um cliente TCP individual (dispositivo wavy).
         /// </summary>
-        /// <param name="client">Ligação TCP do dispositivo Wavy.</param>
+        /// <param name="client">Cliente TCP ligado ao agregador.</param>
         /// <param name="connString">String de ligação à base de dados local do agregador.</param>
-        /// <param name="aggregatorId">Identificador do agregador que está a processar a ligação.</param>
-        public static void HandleClient(TcpClient client, string connString, string aggregatorId)
+        /// <param name="aggregatorId">Identificador do agregador a que o cliente está ligado.</param>
+        public static async Task HandleClientAsync(TcpClient client, string connString, string aggregatorId)
         {
             try
             {
-                // Caminho para o ficheiro que contém os IDs dos WAVIES autorizados
+                // Caminho do ficheiro de autorização (lista de IDs wavy autorizados a comunicar)
                 string authFile = Path.Combine("autorizacoes", $"{aggregatorId}.txt");
-                // Lê os autorizados ou inicia conjunto vazio
+
+                // Lê os wavy_ids autorizados a comunicar com este agregador
                 HashSet<string> autorizados = File.Exists(authFile)
-                    ? new HashSet<string>(File.ReadAllLines(authFile))
+                    ? new HashSet<string>(await File.ReadAllLinesAsync(authFile))
                     : new HashSet<string>();
 
-                // Guarda os WAVIES já verificados para não repetir mensagens
+                // Guarda os wavy_ids para os quais já se mostrou aviso (evita mensagens repetidas)
                 HashSet<string> avisados = new();
 
                 using var stream = client.GetStream();
                 using var reader = new StreamReader(stream, Encoding.UTF8);
 
                 string? line;
-                while ((line = reader.ReadLine()) != null)
+                while ((line = await reader.ReadLineAsync()) != null)
                 {
                     Console.WriteLine($"Linha recebida: {line}");
 
-                    // Indica o início de envio de dados de um WAVY
+                    // Início de envio de dados de um wavy
                     if (line.StartsWith("START:"))
                     {
                         string wavyStart = line.Split(':')[1];
@@ -49,7 +49,7 @@ namespace agregators
                         continue;
                     }
 
-                    // Indica o fim do envio de dados
+                    // Fim de envio de dados de um wavy
                     if (line.StartsWith("END:"))
                     {
                         string wavyEnd = line.Split(':')[1];
@@ -57,7 +57,7 @@ namespace agregators
                         continue;
                     }
 
-                    // Espera-se que os dados venham no formato: wavyId:timestamp,sensor,value
+                    // Espera-se um formato como: wavyId:timestamp,sensor,value
                     var parts = line.Split(',', 3);
                     if (parts.Length == 3 && parts[0].Contains(":"))
                     {
@@ -65,21 +65,19 @@ namespace agregators
                         string wavyId = idSplit[0];
                         string timestampRaw = idSplit[1];
 
-                        // Informa uma só vez se o Wavy está autorizado ou não
+                        // Mostra informação de autorização apenas uma vez por wavyId
                         if (!avisados.Contains(wavyId))
                         {
-                            if (autorizados.Contains(wavyId))
-                                Console.WriteLine($"{wavyId} está autorizado a comunicar com {aggregatorId}.");
-                            else
-                                Console.WriteLine($"{wavyId} NÃO está autorizado a comunicar com {aggregatorId}.");
-
+                            Console.WriteLine(autorizados.Contains(wavyId)
+                                ? $"{wavyId} está autorizado a comunicar com {aggregatorId}."
+                                : $"{wavyId} NÃO está autorizado a comunicar com {aggregatorId}.");
                             avisados.Add(wavyId);
                         }
 
-                        // Ignora se o Wavy não estiver autorizado
+                        // Ignora se não estiver autorizado
                         if (!autorizados.Contains(wavyId)) continue;
 
-                        // Verifica validade do timestamp
+                        // Validação do timestamp
                         if (!DateTime.TryParse(timestampRaw, out DateTime timestamp))
                         {
                             Console.WriteLine($"Timestamp inválido: {timestampRaw}");
@@ -89,7 +87,7 @@ namespace agregators
                         string sensor = parts[1];
                         string value = parts[2];
 
-                        // Insere os dados na base de dados local do agregador
+                        // Acesso exclusivo à base de dados usando lock
                         lock (dbLock)
                         {
                             using var connection = new MySqlConnection(connString);
@@ -116,17 +114,18 @@ namespace agregators
                     }
                     else
                     {
+                        // Linha ignorada se não estiver no formato esperado
                         Console.WriteLine("Linha ignorada (formato inválido).");
                     }
                 }
             }
             catch (Exception ex)
             {
+                // Tratamento de erro da ligação com o cliente
                 Console.WriteLine($"Erro na thread do cliente: {ex.Message}");
             }
             finally
             {
-                // Fecha ligação TCP no final
                 client.Close();
                 Console.WriteLine("Cliente desconectado.");
             }
