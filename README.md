@@ -26,7 +26,7 @@ This project simulates a **distributed sensor ecosystem** — composed of WAVY s
   - **Interactive console-based sensor management**
 
 ---
-## 🧠 Architecture Map
+## 🗺️ Architecture Map
 
 ![image](https://github.com/user-attachments/assets/d79849b4-69e6-4943-836f-e8b551d5e08b)
 
