@@ -84,6 +84,8 @@ namespace agregators
                             continue;
                         }
 
+                        timestamp = timestamp.ToUniversalTime();
+
                         string sensor = parts[1];
                         string value = parts[2];
 
