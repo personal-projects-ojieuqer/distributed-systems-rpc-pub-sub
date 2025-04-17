@@ -55,7 +55,7 @@
                 // Dados base do WAVY
                 string status = "operação";
                 string dataTypes = "Accelerometer,Gyroscope,Hydrophone,Temperature";
-                string lastSync = DateTime.UtcNow.ToString("o");
+                string lastSync = DateTime.Now.ToString("o");
                 string aggregatorId = $"AGG_{rand.Next(1, 4):D2}"; // Escolhe aleatoriamente um agregador
 
                 string configLine = $"{wavyId};{status};[{dataTypes}];{lastSync};{aggregatorId}";

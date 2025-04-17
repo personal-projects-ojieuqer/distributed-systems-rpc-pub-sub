@@ -23,7 +23,7 @@ public static class AggregatorSender
             await conn.OpenAsync();
 
             // Define intervalo para sincronização (último minuto)
-            DateTime ultimoSync = DateTime.UtcNow.AddMinutes(-1);
+            DateTime ultimoSync = DateTime.Now.AddMinutes(-1);
             string query = @"SELECT wavy_id, timestamp, sensor, value 
                              FROM sensor_data 
                              WHERE timestamp > @lastSync 

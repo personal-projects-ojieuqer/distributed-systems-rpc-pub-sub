@@ -60,7 +60,7 @@ public class WavyRunner
         while (!stopRequested)
         {
             temp += rnd.NextDouble() * 0.3 - 0.15;
-            string line = $"{DateTime.UtcNow:o},Temperature,{Math.Round(temp, 2)}";
+            string line = $"{DateTime.Now:o},Temperature,{Math.Round(temp, 2)}";
 
             WriteToFile(line);
             Thread.Sleep(20000); // 20 segundos
@@ -82,7 +82,7 @@ public class WavyRunner
             z += rnd.NextDouble() * 0.1 - 0.05;
 
             string value = $"\"X:{x:F2},Y:{y:F2},Z:{z:F2}\"";
-            string line = $"{DateTime.UtcNow:o},Accelerometer,{value}";
+            string line = $"{DateTime.Now:o},Accelerometer,{value}";
 
             WriteToFile(line);
             Thread.Sleep(10000); // 10 segundos
@@ -104,7 +104,7 @@ public class WavyRunner
             z += rnd.NextDouble() * 0.1 - 0.05;
 
             string value = $"\"X:{x:F2},Y:{y:F2},Z:{z:F2}\"";
-            string line = $"{DateTime.UtcNow:o},Gyroscope,{value}";
+            string line = $"{DateTime.Now:o},Gyroscope,{value}";
 
             WriteToFile(line);
             Thread.Sleep(10000); // 10 segundos
@@ -122,7 +122,7 @@ public class WavyRunner
         while (!stopRequested)
         {
             val += rnd.NextDouble() * 1.5 - 0.75;
-            string line = $"{DateTime.UtcNow:o},Hydrophone,{Math.Round(val, 1)}";
+            string line = $"{DateTime.Now:o},Hydrophone,{Math.Round(val, 1)}";
 
             WriteToFile(line);
             Thread.Sleep(30000); // 30 segundos
