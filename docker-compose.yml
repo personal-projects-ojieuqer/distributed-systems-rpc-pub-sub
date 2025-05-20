@@ -1,6 +1,17 @@
 version: '3.9'
 
 services:
+  # RabbitMQ
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: sdtp2
+      RABBITMQ_DEFAULT_PASS: sdtp2
+
   # databases
   agregator1:
     image: mysql:8.0
