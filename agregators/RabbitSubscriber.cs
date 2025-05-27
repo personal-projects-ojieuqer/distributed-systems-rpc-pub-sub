@@ -1,4 +1,5 @@
-﻿using MySql.Data.MySqlClient;
+﻿// RabbitSubscriber.cs
+using MySql.Data.MySqlClient;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Text;
@@ -27,7 +28,7 @@ namespace agregators
                 Port = 5672,
                 UserName = "sdtp2",
                 Password = "sdtp2",
-                DispatchConsumersAsync = true // IMPORTANT for async consumers
+                DispatchConsumersAsync = true
             };
 
             connection = factory.CreateConnection();
@@ -73,9 +74,11 @@ namespace agregators
                     }
 
                     timestamp = timestamp.ToUniversalTime();
-                    var normalizedValue = await grpcClient.FiltrarOuNormalizarAsync(wavyId, sensor, value);
+                    var recentValues = await ObterUltimosValoresAsync(wavyId, sensor, 5, connString);
 
-                    if (normalizedValue == "Dado Ignorado")
+                    var resposta = await grpcClient.ProcessarAsync(wavyId, sensor, value, timestampRaw, recentValues);
+
+                    if (resposta == null)
                     {
                         channel.BasicAck(ea.DeliveryTag, false);
                         return;
@@ -84,14 +87,36 @@ namespace agregators
                     await using var dbConnection = new MySqlConnection(connString);
                     await dbConnection.OpenAsync();
 
-                    await using var cmd = dbConnection.CreateCommand();
-                    cmd.CommandText = @"INSERT INTO sensor_data (wavy_id, timestamp, sensor, value)
-                                        VALUES (@wavy_id, @timestamp, @sensor, @value)";
-                    cmd.Parameters.AddWithValue("@wavy_id", wavyId);
-                    cmd.Parameters.AddWithValue("@timestamp", timestamp);
-                    cmd.Parameters.AddWithValue("@sensor", sensor);
-                    cmd.Parameters.AddWithValue("@value", normalizedValue);
-                    await cmd.ExecuteNonQueryAsync();
+                    // Inserir dados crus
+                    await using var cmdRaw = dbConnection.CreateCommand();
+                    cmdRaw.CommandText = @"INSERT INTO sensor_data (wavy_id, timestamp, sensor, value)
+                                           VALUES (@wavy_id, @timestamp, @sensor, @value)";
+                    cmdRaw.Parameters.AddWithValue("@wavy_id", wavyId);
+                    cmdRaw.Parameters.AddWithValue("@timestamp", timestamp);
+                    cmdRaw.Parameters.AddWithValue("@sensor", sensor);
+                    cmdRaw.Parameters.AddWithValue("@value", value);
+                    await cmdRaw.ExecuteNonQueryAsync();
+
+                    // Inserir dados processados
+                    await using var cmdProcessed = dbConnection.CreateCommand();
+                    cmdProcessed.CommandText = @"INSERT INTO sensor_processed (
+                        wavy_id, timestamp, sensor, processed_value, mean, stddev, is_outlier, delta, trend, risk_level, normalized_timestamp, on_schedule
+                    ) VALUES (
+                        @wavy_id, @timestamp, @sensor, @processed_value, @mean, @stddev, @is_outlier, @delta, @trend, @risk_level, @normalized_timestamp, @on_schedule
+                    )";
+                    cmdProcessed.Parameters.AddWithValue("@wavy_id", wavyId);
+                    cmdProcessed.Parameters.AddWithValue("@timestamp", timestamp);
+                    cmdProcessed.Parameters.AddWithValue("@sensor", sensor);
+                    cmdProcessed.Parameters.AddWithValue("@processed_value", resposta.ProcessedValue);
+                    cmdProcessed.Parameters.AddWithValue("@mean", resposta.Mean);
+                    cmdProcessed.Parameters.AddWithValue("@stddev", resposta.Stddev);
+                    cmdProcessed.Parameters.AddWithValue("@is_outlier", resposta.IsOutlier);
+                    cmdProcessed.Parameters.AddWithValue("@delta", resposta.DeltaFromLast);
+                    cmdProcessed.Parameters.AddWithValue("@trend", resposta.Trend);
+                    cmdProcessed.Parameters.AddWithValue("@risk_level", resposta.RiskLevel);
+                    cmdProcessed.Parameters.AddWithValue("@normalized_timestamp", resposta.NormalizedTimestamp);
+                    cmdProcessed.Parameters.AddWithValue("@on_schedule", resposta.OnSchedule);
+                    await cmdProcessed.ExecuteNonQueryAsync();
 
                     channel.BasicAck(ea.DeliveryTag, false);
                 }
@@ -109,6 +134,40 @@ namespace agregators
         {
             channel?.Close();
             connection?.Close();
+        }
+
+        private async Task<List<double>> ObterUltimosValoresAsync(string wavyId, string sensor, int n, string connStr)
+        {
+            var valores = new List<double>();
+
+            try
+            {
+                await using var conn = new MySqlConnection(connStr);
+                await conn.OpenAsync();
+
+                await using var cmd = conn.CreateCommand();
+                cmd.CommandText = @"SELECT value FROM sensor_data 
+                                    WHERE wavy_id = @wavy_id AND sensor = @sensor 
+                                    ORDER BY timestamp DESC LIMIT @n";
+                cmd.Parameters.AddWithValue("@wavy_id", wavyId);
+                cmd.Parameters.AddWithValue("@sensor", sensor);
+                cmd.Parameters.AddWithValue("@n", n);
+
+                await using var reader = await cmd.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    if (double.TryParse(reader["value"].ToString(), out double val))
+                        valores.Add(val);
+                }
+
+                valores.Reverse();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Erro BD] Falha ao obter valores anteriores: {ex.Message}");
+            }
+
+            return valores;
         }
     }
 }

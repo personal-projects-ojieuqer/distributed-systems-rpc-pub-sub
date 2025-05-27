@@ -24,17 +24,21 @@ namespace PreProcessRPC {
     static ProcessReflection() {
       byte[] descriptorData = global::System.Convert.FromBase64String(
           string.Concat(
-            "ChRQcm90b3MvcHJvY2Vzcy5wcm90byI+Cg1TZW5zb3JSZXF1ZXN0Eg4KBndh",
-            "dnlJZBgBIAEoCRIOCgZzZW5zb3IYAiABKAkSDQoFdmFsdWUYAyABKAkiOQoO",
-            "U2Vuc29yUmVzcG9uc2USDwoHaXNWYWxpZBgBIAEoCBIWCg5wcm9jZXNzZWRW",
-            "YWx1ZRgCIAEoCTJEChFQcmVwcm9jZXNzU2VydmljZRIvCgxGaWx0ZXJTZW5z",
-            "b3ISDi5TZW5zb3JSZXF1ZXN0Gg8uU2Vuc29yUmVzcG9uc2VCEKoCDVByZVBy",
-            "b2Nlc3NSUENiBnByb3RvMw=="));
+            "ChRQcm90b3MvcHJvY2Vzcy5wcm90byJnCg1TZW5zb3JSZXF1ZXN0Eg4KBndh",
+            "dnlJZBgBIAEoCRIOCgZzZW5zb3IYAiABKAkSDQoFdmFsdWUYAyABKAkSEQoJ",
+            "dGltZXN0YW1wGAQgASgJEhQKDHJlY2VudFZhbHVlcxgFIAMoASLUAQoOU2Vu",
+            "c29yUmVzcG9uc2USDwoHaXNWYWxpZBgBIAEoCBIWCg5wcm9jZXNzZWRWYWx1",
+            "ZRgCIAEoCRIMCgRtZWFuGAMgASgBEg4KBnN0ZGRldhgEIAEoARIRCglpc091",
+            "dGxpZXIYBSABKAgSFQoNZGVsdGFGcm9tTGFzdBgGIAEoARINCgV0cmVuZBgH",
+            "IAEoCRIRCglyaXNrTGV2ZWwYCCABKAkSGwoTbm9ybWFsaXplZFRpbWVzdGFt",
+            "cBgJIAEoCRISCgpvblNjaGVkdWxlGAogASgIMkQKEVByZXByb2Nlc3NTZXJ2",
+            "aWNlEi8KDEZpbHRlclNlbnNvchIOLlNlbnNvclJlcXVlc3QaDy5TZW5zb3JS",
+            "ZXNwb25zZUIQqgINUHJlUHJvY2Vzc1JQQ2IGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::PreProcessRPC.SensorRequest), global::PreProcessRPC.SensorRequest.Parser, new[]{ "WavyId", "Sensor", "Value" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::PreProcessRPC.SensorResponse), global::PreProcessRPC.SensorResponse.Parser, new[]{ "IsValid", "ProcessedValue" }, null, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::PreProcessRPC.SensorRequest), global::PreProcessRPC.SensorRequest.Parser, new[]{ "WavyId", "Sensor", "Value", "Timestamp", "RecentValues" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::PreProcessRPC.SensorResponse), global::PreProcessRPC.SensorResponse.Parser, new[]{ "IsValid", "ProcessedValue", "Mean", "Stddev", "IsOutlier", "DeltaFromLast", "Trend", "RiskLevel", "NormalizedTimestamp", "OnSchedule" }, null, null, null, null)
           }));
     }
     #endregion
@@ -79,6 +83,8 @@ namespace PreProcessRPC {
       wavyId_ = other.wavyId_;
       sensor_ = other.sensor_;
       value_ = other.value_;
+      timestamp_ = other.timestamp_;
+      recentValues_ = other.recentValues_.Clone();
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -124,6 +130,29 @@ namespace PreProcessRPC {
       }
     }
 
+    /// <summary>Field number for the "timestamp" field.</summary>
+    public const int TimestampFieldNumber = 4;
+    private string timestamp_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string Timestamp {
+      get { return timestamp_; }
+      set {
+        timestamp_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    /// <summary>Field number for the "recentValues" field.</summary>
+    public const int RecentValuesFieldNumber = 5;
+    private static readonly pb::FieldCodec<double> _repeated_recentValues_codec
+        = pb::FieldCodec.ForDouble(42);
+    private readonly pbc::RepeatedField<double> recentValues_ = new pbc::RepeatedField<double>();
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public pbc::RepeatedField<double> RecentValues {
+      get { return recentValues_; }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -142,6 +171,8 @@ namespace PreProcessRPC {
       if (WavyId != other.WavyId) return false;
       if (Sensor != other.Sensor) return false;
       if (Value != other.Value) return false;
+      if (Timestamp != other.Timestamp) return false;
+      if(!recentValues_.Equals(other.recentValues_)) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -152,6 +183,8 @@ namespace PreProcessRPC {
       if (WavyId.Length != 0) hash ^= WavyId.GetHashCode();
       if (Sensor.Length != 0) hash ^= Sensor.GetHashCode();
       if (Value.Length != 0) hash ^= Value.GetHashCode();
+      if (Timestamp.Length != 0) hash ^= Timestamp.GetHashCode();
+      hash ^= recentValues_.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -182,6 +215,11 @@ namespace PreProcessRPC {
         output.WriteRawTag(26);
         output.WriteString(Value);
       }
+      if (Timestamp.Length != 0) {
+        output.WriteRawTag(34);
+        output.WriteString(Timestamp);
+      }
+      recentValues_.WriteTo(output, _repeated_recentValues_codec);
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -204,6 +242,11 @@ namespace PreProcessRPC {
         output.WriteRawTag(26);
         output.WriteString(Value);
       }
+      if (Timestamp.Length != 0) {
+        output.WriteRawTag(34);
+        output.WriteString(Timestamp);
+      }
+      recentValues_.WriteTo(ref output, _repeated_recentValues_codec);
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -223,6 +266,10 @@ namespace PreProcessRPC {
       if (Value.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(Value);
       }
+      if (Timestamp.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(Timestamp);
+      }
+      size += recentValues_.CalculateSize(_repeated_recentValues_codec);
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
       }
@@ -244,6 +291,10 @@ namespace PreProcessRPC {
       if (other.Value.Length != 0) {
         Value = other.Value;
       }
+      if (other.Timestamp.Length != 0) {
+        Timestamp = other.Timestamp;
+      }
+      recentValues_.Add(other.recentValues_);
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
 
@@ -275,6 +326,15 @@ namespace PreProcessRPC {
             Value = input.ReadString();
             break;
           }
+          case 34: {
+            Timestamp = input.ReadString();
+            break;
+          }
+          case 42:
+          case 41: {
+            recentValues_.AddEntriesFrom(input, _repeated_recentValues_codec);
+            break;
+          }
         }
       }
     #endif
@@ -304,6 +364,15 @@ namespace PreProcessRPC {
           }
           case 26: {
             Value = input.ReadString();
+            break;
+          }
+          case 34: {
+            Timestamp = input.ReadString();
+            break;
+          }
+          case 42:
+          case 41: {
+            recentValues_.AddEntriesFrom(ref input, _repeated_recentValues_codec);
             break;
           }
         }
@@ -350,6 +419,14 @@ namespace PreProcessRPC {
     public SensorResponse(SensorResponse other) : this() {
       isValid_ = other.isValid_;
       processedValue_ = other.processedValue_;
+      mean_ = other.mean_;
+      stddev_ = other.stddev_;
+      isOutlier_ = other.isOutlier_;
+      deltaFromLast_ = other.deltaFromLast_;
+      trend_ = other.trend_;
+      riskLevel_ = other.riskLevel_;
+      normalizedTimestamp_ = other.normalizedTimestamp_;
+      onSchedule_ = other.onSchedule_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -383,6 +460,102 @@ namespace PreProcessRPC {
       }
     }
 
+    /// <summary>Field number for the "mean" field.</summary>
+    public const int MeanFieldNumber = 3;
+    private double mean_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public double Mean {
+      get { return mean_; }
+      set {
+        mean_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "stddev" field.</summary>
+    public const int StddevFieldNumber = 4;
+    private double stddev_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public double Stddev {
+      get { return stddev_; }
+      set {
+        stddev_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "isOutlier" field.</summary>
+    public const int IsOutlierFieldNumber = 5;
+    private bool isOutlier_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool IsOutlier {
+      get { return isOutlier_; }
+      set {
+        isOutlier_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "deltaFromLast" field.</summary>
+    public const int DeltaFromLastFieldNumber = 6;
+    private double deltaFromLast_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public double DeltaFromLast {
+      get { return deltaFromLast_; }
+      set {
+        deltaFromLast_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "trend" field.</summary>
+    public const int TrendFieldNumber = 7;
+    private string trend_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string Trend {
+      get { return trend_; }
+      set {
+        trend_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    /// <summary>Field number for the "riskLevel" field.</summary>
+    public const int RiskLevelFieldNumber = 8;
+    private string riskLevel_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string RiskLevel {
+      get { return riskLevel_; }
+      set {
+        riskLevel_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    /// <summary>Field number for the "normalizedTimestamp" field.</summary>
+    public const int NormalizedTimestampFieldNumber = 9;
+    private string normalizedTimestamp_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string NormalizedTimestamp {
+      get { return normalizedTimestamp_; }
+      set {
+        normalizedTimestamp_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    /// <summary>Field number for the "onSchedule" field.</summary>
+    public const int OnScheduleFieldNumber = 10;
+    private bool onSchedule_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool OnSchedule {
+      get { return onSchedule_; }
+      set {
+        onSchedule_ = value;
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -400,6 +573,14 @@ namespace PreProcessRPC {
       }
       if (IsValid != other.IsValid) return false;
       if (ProcessedValue != other.ProcessedValue) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.Equals(Mean, other.Mean)) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.Equals(Stddev, other.Stddev)) return false;
+      if (IsOutlier != other.IsOutlier) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.Equals(DeltaFromLast, other.DeltaFromLast)) return false;
+      if (Trend != other.Trend) return false;
+      if (RiskLevel != other.RiskLevel) return false;
+      if (NormalizedTimestamp != other.NormalizedTimestamp) return false;
+      if (OnSchedule != other.OnSchedule) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -409,6 +590,14 @@ namespace PreProcessRPC {
       int hash = 1;
       if (IsValid != false) hash ^= IsValid.GetHashCode();
       if (ProcessedValue.Length != 0) hash ^= ProcessedValue.GetHashCode();
+      if (Mean != 0D) hash ^= pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.GetHashCode(Mean);
+      if (Stddev != 0D) hash ^= pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.GetHashCode(Stddev);
+      if (IsOutlier != false) hash ^= IsOutlier.GetHashCode();
+      if (DeltaFromLast != 0D) hash ^= pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.GetHashCode(DeltaFromLast);
+      if (Trend.Length != 0) hash ^= Trend.GetHashCode();
+      if (RiskLevel.Length != 0) hash ^= RiskLevel.GetHashCode();
+      if (NormalizedTimestamp.Length != 0) hash ^= NormalizedTimestamp.GetHashCode();
+      if (OnSchedule != false) hash ^= OnSchedule.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -435,6 +624,38 @@ namespace PreProcessRPC {
         output.WriteRawTag(18);
         output.WriteString(ProcessedValue);
       }
+      if (Mean != 0D) {
+        output.WriteRawTag(25);
+        output.WriteDouble(Mean);
+      }
+      if (Stddev != 0D) {
+        output.WriteRawTag(33);
+        output.WriteDouble(Stddev);
+      }
+      if (IsOutlier != false) {
+        output.WriteRawTag(40);
+        output.WriteBool(IsOutlier);
+      }
+      if (DeltaFromLast != 0D) {
+        output.WriteRawTag(49);
+        output.WriteDouble(DeltaFromLast);
+      }
+      if (Trend.Length != 0) {
+        output.WriteRawTag(58);
+        output.WriteString(Trend);
+      }
+      if (RiskLevel.Length != 0) {
+        output.WriteRawTag(66);
+        output.WriteString(RiskLevel);
+      }
+      if (NormalizedTimestamp.Length != 0) {
+        output.WriteRawTag(74);
+        output.WriteString(NormalizedTimestamp);
+      }
+      if (OnSchedule != false) {
+        output.WriteRawTag(80);
+        output.WriteBool(OnSchedule);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -453,6 +674,38 @@ namespace PreProcessRPC {
         output.WriteRawTag(18);
         output.WriteString(ProcessedValue);
       }
+      if (Mean != 0D) {
+        output.WriteRawTag(25);
+        output.WriteDouble(Mean);
+      }
+      if (Stddev != 0D) {
+        output.WriteRawTag(33);
+        output.WriteDouble(Stddev);
+      }
+      if (IsOutlier != false) {
+        output.WriteRawTag(40);
+        output.WriteBool(IsOutlier);
+      }
+      if (DeltaFromLast != 0D) {
+        output.WriteRawTag(49);
+        output.WriteDouble(DeltaFromLast);
+      }
+      if (Trend.Length != 0) {
+        output.WriteRawTag(58);
+        output.WriteString(Trend);
+      }
+      if (RiskLevel.Length != 0) {
+        output.WriteRawTag(66);
+        output.WriteString(RiskLevel);
+      }
+      if (NormalizedTimestamp.Length != 0) {
+        output.WriteRawTag(74);
+        output.WriteString(NormalizedTimestamp);
+      }
+      if (OnSchedule != false) {
+        output.WriteRawTag(80);
+        output.WriteBool(OnSchedule);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -468,6 +721,30 @@ namespace PreProcessRPC {
       }
       if (ProcessedValue.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(ProcessedValue);
+      }
+      if (Mean != 0D) {
+        size += 1 + 8;
+      }
+      if (Stddev != 0D) {
+        size += 1 + 8;
+      }
+      if (IsOutlier != false) {
+        size += 1 + 1;
+      }
+      if (DeltaFromLast != 0D) {
+        size += 1 + 8;
+      }
+      if (Trend.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(Trend);
+      }
+      if (RiskLevel.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(RiskLevel);
+      }
+      if (NormalizedTimestamp.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(NormalizedTimestamp);
+      }
+      if (OnSchedule != false) {
+        size += 1 + 1;
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -486,6 +763,30 @@ namespace PreProcessRPC {
       }
       if (other.ProcessedValue.Length != 0) {
         ProcessedValue = other.ProcessedValue;
+      }
+      if (other.Mean != 0D) {
+        Mean = other.Mean;
+      }
+      if (other.Stddev != 0D) {
+        Stddev = other.Stddev;
+      }
+      if (other.IsOutlier != false) {
+        IsOutlier = other.IsOutlier;
+      }
+      if (other.DeltaFromLast != 0D) {
+        DeltaFromLast = other.DeltaFromLast;
+      }
+      if (other.Trend.Length != 0) {
+        Trend = other.Trend;
+      }
+      if (other.RiskLevel.Length != 0) {
+        RiskLevel = other.RiskLevel;
+      }
+      if (other.NormalizedTimestamp.Length != 0) {
+        NormalizedTimestamp = other.NormalizedTimestamp;
+      }
+      if (other.OnSchedule != false) {
+        OnSchedule = other.OnSchedule;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -514,6 +815,38 @@ namespace PreProcessRPC {
             ProcessedValue = input.ReadString();
             break;
           }
+          case 25: {
+            Mean = input.ReadDouble();
+            break;
+          }
+          case 33: {
+            Stddev = input.ReadDouble();
+            break;
+          }
+          case 40: {
+            IsOutlier = input.ReadBool();
+            break;
+          }
+          case 49: {
+            DeltaFromLast = input.ReadDouble();
+            break;
+          }
+          case 58: {
+            Trend = input.ReadString();
+            break;
+          }
+          case 66: {
+            RiskLevel = input.ReadString();
+            break;
+          }
+          case 74: {
+            NormalizedTimestamp = input.ReadString();
+            break;
+          }
+          case 80: {
+            OnSchedule = input.ReadBool();
+            break;
+          }
         }
       }
     #endif
@@ -539,6 +872,38 @@ namespace PreProcessRPC {
           }
           case 18: {
             ProcessedValue = input.ReadString();
+            break;
+          }
+          case 25: {
+            Mean = input.ReadDouble();
+            break;
+          }
+          case 33: {
+            Stddev = input.ReadDouble();
+            break;
+          }
+          case 40: {
+            IsOutlier = input.ReadBool();
+            break;
+          }
+          case 49: {
+            DeltaFromLast = input.ReadDouble();
+            break;
+          }
+          case 58: {
+            Trend = input.ReadString();
+            break;
+          }
+          case 66: {
+            RiskLevel = input.ReadString();
+            break;
+          }
+          case 74: {
+            NormalizedTimestamp = input.ReadString();
+            break;
+          }
+          case 80: {
+            OnSchedule = input.ReadBool();
             break;
           }
         }

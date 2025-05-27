@@ -13,14 +13,16 @@ namespace agregators
             _client = new PreprocessService.PreprocessServiceClient(channel);
         }
 
-        public async Task<string> FiltrarOuNormalizarAsync(string wavyId, string sensor, string value)
+        public async Task<SensorResponse?> ProcessarAsync(string wavyId, string sensor, string value, string timestamp, List<double> recentValues)
         {
             var request = new SensorRequest
             {
                 WavyId = wavyId,
                 Sensor = sensor,
-                Value = value
+                Value = value,
+                Timestamp = timestamp
             };
+            request.RecentValues.AddRange(recentValues);
 
             try
             {
@@ -28,16 +30,17 @@ namespace agregators
                 if (!response.IsValid)
                 {
                     Console.WriteLine($"[gRPC] Valor inválido filtrado: {value}");
-                    return "Dado Ignorado";
+                    return null;
                 }
 
-                return response.ProcessedValue;
+                return response;
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"[gRPC] Falha na chamada RPC: {ex.Message}");
-                return "Dado Ignorado";
+                return null;
             }
         }
+
     }
 }

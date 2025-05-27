@@ -1,5 +1,4 @@
 syntax = "proto3";
-
 option csharp_namespace = "GrpcClient";
 
 service PreprocessService {
@@ -10,9 +9,19 @@ message SensorRequest {
   string wavyId = 1;
   string sensor = 2;
   string value = 3;
+  string timestamp = 4;
+  repeated double recentValues = 5;
 }
 
 message SensorResponse {
   bool isValid = 1;
   string processedValue = 2;
+  double mean = 3;
+  double stddev = 4;
+  bool isOutlier = 5;
+  double deltaFromLast = 6;
+  string trend = 7;
+  string riskLevel = 8;
+  string normalizedTimestamp = 9;
+  bool onSchedule = 10;
 }
