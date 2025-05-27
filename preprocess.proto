@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+option csharp_namespace = "GrpcContracts";
+
+package preprocess;
+
+// Serviço que o servidor RPC irá implementar
+service PreprocessService {
+  rpc FilterOutliers (SensorBatch) returns (PreprocessResult);
+}
+
+// Um lote de leituras de sensores vindos de um agregador
+message SensorBatch {
+  string aggregator_id = 1;
+  repeated SensorReading readings = 2;
+}
+
+// Cada leitura individual
+message SensorReading {
+  string wavy_id = 1;
+  string sensor = 2;
+  string timestamp = 3;
+  string value = 4;
+}
+
+// Resposta com os dados filtrados
+message PreprocessResult {
+  repeated SensorReading filtered = 1;
+}

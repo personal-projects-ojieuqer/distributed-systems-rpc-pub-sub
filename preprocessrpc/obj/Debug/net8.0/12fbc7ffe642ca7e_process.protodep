@@ -1,0 +1,2 @@
+obj\Debug\net8.0\Protos/Process.cs \
+obj\Debug\net8.0\Protos/ProcessGrpc.cs: Protos/process.proto

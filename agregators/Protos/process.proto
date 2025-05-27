@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+option csharp_namespace = "GrpcClient";
+
+service PreprocessService {
+  rpc FilterSensor (SensorRequest) returns (SensorResponse);
+}
+
+message SensorRequest {
+  string wavyId = 1;
+  string sensor = 2;
+  string value = 3;
+}
+
+message SensorResponse {
+  bool isValid = 1;
+  string processedValue = 2;
+}
