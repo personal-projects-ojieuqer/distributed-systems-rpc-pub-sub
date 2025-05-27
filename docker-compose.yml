@@ -52,6 +52,19 @@ services:
     ports:
       - "3317:3306"
 
+  agregator4:
+    image: mysql:8.0
+    container_name: mysql_agregator4_tp2
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: agregator4_db_tp2
+    volumes:
+      - ./mysql-agregator4:/docker-entrypoint-initdb.d
+      - mysql-ag4-data:/var/lib/mysql
+    ports:
+      - "3318:3306"
+
   server:
     image: mysql:8.0
     container_name: mysql_server_tp2
@@ -129,8 +142,25 @@ services:
       SUBSCRIPTION_KEY: "sensor.#.hydrophone"
     ports:
       - "5003:13313"
-    volumes:
-      - ./agregators/autorizacoes:/app/autorizacoes
+
+  agregator_app_4:
+      build: 
+              context: ./agregators
+              dockerfile: Dockerfile
+      container_name: agregator_app_4
+      depends_on:
+        - agregator4
+      environment:
+        AGGREGATOR_ID: AGG_04
+        MYSQL_HOST: agregator4
+        MYSQL_PORT: 3306
+        MYSQL_DB: agregator4_db_tp2
+        MYSQL_USER: root
+        MYSQL_PASS: root
+        LISTEN_PORT: 13314
+        SUBSCRIPTION_KEY: "sensor.#.accelerometer"
+      ports:
+        - "5004:13314"
 
   preprocessrpc:
     build:
@@ -174,4 +204,5 @@ volumes:
   mysql-ag1-data:
   mysql-ag2-data:
   mysql-ag3-data:
+  mysql-ag4-data:
   mysql-server-data:
