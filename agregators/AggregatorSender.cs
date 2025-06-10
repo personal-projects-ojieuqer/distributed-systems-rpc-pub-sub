@@ -16,6 +16,7 @@ public static class AggregatorSender
     /// <param name="servidorPorta">Porta do servidor onde o serviço está a escutar.</param>
     public static async Task EnviarDadosParaServidorAsync(string aggregatorId, string localConnStr, string servidorIp, int servidorPorta)
     {
+        Console.WriteLine($"[AGGREGADOR {aggregatorId}] 🟡 Início do envio para o servidor {servidorIp}:{servidorPorta}");
         try
         {
             // Abre ligação à base de dados local
@@ -77,10 +78,14 @@ public static class AggregatorSender
             // Envia todos os dados linha a linha
             foreach (var linha in linhasParaEnviar)
             {
+                //AQUIII
+                Console.WriteLine($"[AGGREGADOR {aggregatorId}] A enviar: {linha}");
                 await writer.WriteLineAsync(linha);
             }
 
             // Finaliza transmissão
+            Console.WriteLine($"[AGGREGADOR {aggregatorId}] Fim da transmissão.");
+
             await writer.WriteLineAsync($"END:{aggregatorId}");
 
             Console.WriteLine($"[AGGREGADOR {aggregatorId}] Enviados {linhasParaEnviar.Count} registos ao servidor.");

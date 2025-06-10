@@ -1,55 +1,45 @@
-﻿using MySql.Data.MySqlClient;
+﻿// Program.cs adaptado para usar HPC após guardar os dados
+// Program.cs adaptado para guardar previsões e dados RAW em tabelas separadas por tipo de sensor
+using Grpc.Net.Client;
+using HpcService;
+using MySql.Data.MySqlClient;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
 
-/// <summary>
-/// Classe principal que representa o servidor TCP que escuta ligações de agregadores e armazena os dados recebidos numa base de dados MySQL.
-/// </summary>
 class Program
 {
-    // Semáforo utilizado para controlar o acesso concorrente à base de dados
     private static readonly SemaphoreSlim dbSemaphore = new(1, 1);
-
-    // String de ligação à base de dados central
     private static string centralConnStr = string.Empty;
+    private static HpcAnalysisService.HpcAnalysisServiceClient? hpcClient;
 
-    /// <summary>
-    /// Ponto de entrada do programa. Inicializa o servidor TCP e começa a escutar ligações de agregadores.
-    /// </summary>
     static async Task Main()
     {
         Console.WriteLine("Servidor iniciado e pronto para receber dados dos agregadores via TCP.");
 
-        // Obtém variáveis de ambiente para configurar a string de ligação
         string mysqlPort = Environment.GetEnvironmentVariable("MYSQL_PORT")!;
         string mysqlUser = Environment.GetEnvironmentVariable("MYSQL_USER")!;
         string mysqlPass = Environment.GetEnvironmentVariable("MYSQL_PASS")!;
         string centralHost = Environment.GetEnvironmentVariable("MYSQL_HOST_SERVER")!;
         string centralDb = Environment.GetEnvironmentVariable("MYSQL_DB_SERVER")!;
+        centralConnStr = $"Server={centralHost};Port={mysqlPort};Database={centralDb};Uid={mysqlUser};Pwd={mysqlPass};";
 
-        // Monta a string de ligação à base de dados
-        centralConnStr = $"Server={centralHost};Port={mysqlPort};Database={centralDb};Uid={mysqlUser};Pwd={mysqlPass};Pooling=true;Min Pool Size=0;Max Pool Size=100;";
+        var hpcAddress = Environment.GetEnvironmentVariable("HPC_ADDRESS") ?? "https://hpc:5001";
+        var channel = GrpcChannel.ForAddress(hpcAddress);
+        hpcClient = new HpcAnalysisService.HpcAnalysisServiceClient(channel);
 
-        // Porta onde o servidor irá escutar as ligações
         int port = int.Parse(Environment.GetEnvironmentVariable("SERVER_PORT") ?? "15000");
-
         var listener = new TcpListener(IPAddress.Any, port);
         listener.Start();
         Console.WriteLine($"[SERVIDOR] A escutar na porta {port}...");
 
-        // Ciclo principal para aceitar novas ligações de clientes
         while (true)
         {
             var client = await listener.AcceptTcpClientAsync();
-            _ = Task.Run(() => HandleAggregatorAsync(client)); // Trata cada ligação num processo separado
+            _ = Task.Run(() => HandleAggregatorAsync(client));
         }
     }
 
-    /// <summary>
-    /// Trata a ligação de um agregador, processa as mensagens recebidas e insere os dados na base de dados.
-    /// </summary>
-    /// <param name="client">Instância de TcpClient que representa a ligação com o agregador.</param>
     static async Task HandleAggregatorAsync(TcpClient client)
     {
         try
@@ -62,98 +52,141 @@ class Program
             string? line;
             string? currentAgg = null;
 
-            // Lê as mensagens linha a linha enquanto houver dados
             while ((line = await reader.ReadLineAsync()) != null)
             {
-                // Validação do handshake com token do agregador
-                if (line.StartsWith("HANDSHAKE:"))
-                {
-                    var handshakeParts = line.Split(':');
-                    string handshakeAggId = handshakeParts[1];
-                    string receivedToken = handshakeParts[2];
+                //AQUIIII
+                Console.WriteLine($"[SERVIDOR] Linha recebida: {line}");
+                //if (line.StartsWith("HANDSHAKE:"))
+                //{
+                //    var handshakeParts = line.Split(':');
+                //    string id = handshakeParts[1];
+                //    string token = handshakeParts[2];
+                //    string? expected = Environment.GetEnvironmentVariable($"AGG_TOKEN_{id}");
+                //    if (expected is null || expected != token)
+                //    {
+                //        Console.WriteLine($"Token inválido para {id}. Ligação recusada.");
+                //        client.Close(); return;
+                //    }
+                //    Console.WriteLine($"Handshake com {id} verificado.");
+                //    continue;
+                //}
 
-                    // Procura o token esperado nas variáveis de ambiente
-                    string? expectedToken = Environment.GetEnvironmentVariable($"AGG_TOKEN_{handshakeAggId}");
+                if (line.StartsWith("START:")) { currentAgg = line.Split(':')[1]; Console.WriteLine($"Início de {currentAgg}"); continue; }
+                if (line.StartsWith("END:")) { Console.WriteLine($" Fim de {line.Split(':')[1]}"); continue; }
 
-                    // Verifica se o token é válido
-                    if (expectedToken is null || expectedToken != receivedToken)
-                    {
-                        Console.WriteLine($"\nToken inválido para {handshakeAggId}. Ligação recusada.");
-                        client.Close(); // Encerra a ligação se o token não for válido
-                        return;
-                    }
-
-                    Console.WriteLine($"\nHandshake com {handshakeAggId} verificado com sucesso.");
-                    continue;
-                }
-
-                // Indica o início da transmissão de dados pelo agregador
-                if (line.StartsWith("START:"))
-                {
-                    currentAgg = line.Split(':')[1];
-                    Console.WriteLine($"\n🟢 Início do envio de dados de {currentAgg}");
-                    continue;
-                }
-
-                // Indica o fim da transmissão de dados
-                if (line.StartsWith("END:"))
-                {
-                    string endAgg = line.Split(':')[1];
-                    Console.WriteLine($"🔴 Fim do envio de dados de {endAgg}\n");
-                    continue;
-                }
-
-                // Espera-se que os dados tenham o formato: aggId,wavyId,timestamp,sensor,value
                 var parts = line.Split(',', 5);
-                if (parts.Length != 5)
-                {
-                    Console.WriteLine("Linha mal formatada: " + line);
-                    continue;
-                }
+                if (parts.Length != 5) { Console.WriteLine("Linha mal formatada: " + line); continue; }
 
                 string aggId = parts[0];
                 string wavyId = parts[1];
-
-                // Tenta converter o timestamp para DateTime
-                if (!DateTime.TryParse(parts[2], out var timestamp))
-                {
-                    Console.WriteLine($"Timestamp inválido: {parts[2]}");
-                    continue;
-                }
-
+                if (!DateTime.TryParse(parts[2], out var timestamp)) { Console.WriteLine("Timestamp inválido: " + parts[2]); continue; }
                 string sensor = parts[3];
                 string value = parts[4];
 
-                // Aguarda acesso exclusivo à base de dados
+                string rawTable = sensor switch
+                {
+                    "Temperature" => "raw_temperature",
+                    "Hydrophone" => "raw_hydrophone",
+                    "Accelerometer" => "raw_accelerometer",
+                    "Gyroscope" => "raw_gyroscope",
+                    _ => null
+                };
+
+                string projectionTable = sensor switch
+                {
+                    "Temperature" => "projection_temperature",
+                    "Hydrophone" => "projection_hydrophone",
+                    "Accelerometer" => "projection_accelerometer",
+                    "Gyroscope" => "projection_gyroscope",
+                    _ => null
+                };
+
+                if (rawTable == null || projectionTable == null) continue;
+
                 await dbSemaphore.WaitAsync();
                 try
                 {
                     using var cmd = conn.CreateCommand();
-                    cmd.CommandText = @"INSERT INTO central_sensor_data (wavy_id, timestamp, sensor, value, aggregator)
-                                        VALUES (@wavy_id, @timestamp, @sensor, @value, @aggregator)";
-                    cmd.Parameters.AddWithValue("@wavy_id", wavyId);
-                    cmd.Parameters.AddWithValue("@timestamp", timestamp);
-                    cmd.Parameters.AddWithValue("@sensor", sensor);
-                    cmd.Parameters.AddWithValue("@value", value);
-                    cmd.Parameters.AddWithValue("@aggregator", aggId);
-
-                    await cmd.ExecuteNonQueryAsync(); // Executa a inserção de forma assíncrona
+                    cmd.CommandText = $"INSERT INTO {rawTable} (wavy_id, timestamp, value, aggregator) VALUES (@w, @t, @v, @a)";
+                    cmd.Parameters.AddWithValue("@w", wavyId);
+                    cmd.Parameters.AddWithValue("@t", timestamp);
+                    cmd.Parameters.AddWithValue("@v", value);
+                    cmd.Parameters.AddWithValue("@a", aggId);
+                    await cmd.ExecuteNonQueryAsync();
                 }
-                finally
+                finally { dbSemaphore.Release(); }
+
+                Console.WriteLine($"[{aggId}] Guardado: {wavyId} {sensor} = {value}");
+
+                var historico = await ObterHistoricoAsync(conn, rawTable, wavyId, 5);
+                if (historico.Count >= 2 && double.TryParse(value, out _))
                 {
-                    dbSemaphore.Release(); // Liberta o semáforo para que outro processo possa aceder
-                }
+                    var resposta = await hpcClient!.PreverDadosAsync(new HpcForecastRequest
+                    {
+                        WavyId = wavyId,
+                        Sensor = sensor,
+                        Timestamp = timestamp.ToString("o"),
+                        Historico = { historico }
+                    });
 
-                Console.WriteLine($"[{aggId}] Inserido: {wavyId} | {sensor} = {value}");
+                    for (int i = 0; i < resposta.PrevisoesModeloA.Count; i++)
+                    {
+                        using var insertPred = conn.CreateCommand();
+                        insertPred.CommandText = $@"
+                            INSERT INTO {projectionTable} (
+                                wavy_id, base_timestamp, minuto_offset,
+                                valor_previsto_modeloA, valor_previsto_modeloB,
+                                modelo_mais_confiavel, classificacao, explicacao,
+                                confianca, padrao_detectado, gerado_em
+                            ) VALUES (
+                                @w, @ts, @offset,
+                                @valA, @valB,
+                                @modelo, @classif, @explicacao,
+                                @conf, @padrao, @now
+                            )";
+
+                        insertPred.Parameters.AddWithValue("@w", wavyId);
+                        insertPred.Parameters.AddWithValue("@ts", timestamp);
+                        insertPred.Parameters.AddWithValue("@offset", i + 1);
+                        insertPred.Parameters.AddWithValue("@valA", resposta.PrevisoesModeloA[i]);
+                        insertPred.Parameters.AddWithValue("@valB", resposta.PrevisoesModeloB[i]);
+                        insertPred.Parameters.AddWithValue("@modelo", resposta.ModeloMaisConfiavel);
+                        insertPred.Parameters.AddWithValue("@classif", resposta.Classificacao);
+                        insertPred.Parameters.AddWithValue("@explicacao", resposta.Explicacao);
+                        insertPred.Parameters.AddWithValue("@conf", resposta.Confianca);
+                        insertPred.Parameters.AddWithValue("@padrao", resposta.PadraoDetectado);
+                        insertPred.Parameters.AddWithValue("@now", DateTime.UtcNow);
+
+                        await insertPred.ExecuteNonQueryAsync();
+                    }
+                }
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[SERVIDOR] Erro ao processar dados do agregador: {ex.Message}");
+            Console.WriteLine($"[SERVIDOR] Erro: {ex.Message}");
         }
         finally
         {
-            client.Close(); // Garante que a ligação seja encerrada
+            client.Close();
         }
     }
+
+    static async Task<List<double>> ObterHistoricoAsync(MySqlConnection conn, string table, string wavyId, int n)
+    {
+        var lista = new List<double>();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = $"SELECT value FROM {table} WHERE wavy_id=@w ORDER BY timestamp DESC LIMIT @n";
+        cmd.Parameters.AddWithValue("@w", wavyId);
+        cmd.Parameters.AddWithValue("@n", n);
+        using var reader = await cmd.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            if (double.TryParse(reader["value"].ToString(), out double val))
+                lista.Add(val);
+        }
+        lista.Reverse();
+        return lista;
+    }
 }
+

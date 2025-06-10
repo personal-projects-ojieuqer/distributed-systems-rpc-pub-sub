@@ -41,7 +41,10 @@ namespace agregators
         {
             string queueName = $"queue_{aggregatorId.ToLower()}";
             channel.QueueDeclare(queue: queueName, durable: true, exclusive: false, autoDelete: false);
-            channel.QueueBind(queue: queueName, exchange: "sensores", routingKey: subscriptionKey);
+            foreach (var key in subscriptionKey.Split(','))
+            {
+                channel.QueueBind(queue: queueName, exchange: "sensores", routingKey: key.Trim());
+            }
 
             Console.WriteLine($"[{aggregatorId}] Subscrito a {subscriptionKey}");
 
@@ -74,8 +77,26 @@ namespace agregators
                     }
 
                     timestamp = timestamp.ToUniversalTime();
-                    var recentValues = await ObterUltimosValoresAsync(wavyId, sensor, 5, connString);
+                    string rawTable = $"{sensor.Trim().ToLowerInvariant()}_data_raw";
+                    string processedTable = $"{sensor.ToLower()}_data_processed";
 
+                    await using var dbConnection = new MySqlConnection(connString);
+                    await dbConnection.OpenAsync();
+
+                    // Inserir dados crus imediatamente
+                    await using var cmdRaw = dbConnection.CreateCommand();
+                    cmdRaw.CommandText = $@"INSERT INTO {rawTable} (wavy_id, timestamp, sensor, value)
+                                           VALUES (@wavy_id, @timestamp, @sensor, @value)";
+                    cmdRaw.Parameters.AddWithValue("@wavy_id", wavyId);
+                    cmdRaw.Parameters.AddWithValue("@timestamp", timestamp);
+                    cmdRaw.Parameters.AddWithValue("@sensor", sensor);
+                    cmdRaw.Parameters.AddWithValue("@value", value);
+                    await cmdRaw.ExecuteNonQueryAsync();
+
+                    // Obter valores anteriores para processamento
+                    var recentValues = await ObterUltimosValoresAsync(wavyId, sensor, 5, connString, rawTable);
+
+                    // Processar via RPC
                     var resposta = await grpcClient.ProcessarAsync(wavyId, sensor, value, timestampRaw, recentValues);
 
                     if (resposta == null)
@@ -84,22 +105,9 @@ namespace agregators
                         return;
                     }
 
-                    await using var dbConnection = new MySqlConnection(connString);
-                    await dbConnection.OpenAsync();
-
-                    // Inserir dados crus
-                    await using var cmdRaw = dbConnection.CreateCommand();
-                    cmdRaw.CommandText = @"INSERT INTO sensor_data (wavy_id, timestamp, sensor, value)
-                                           VALUES (@wavy_id, @timestamp, @sensor, @value)";
-                    cmdRaw.Parameters.AddWithValue("@wavy_id", wavyId);
-                    cmdRaw.Parameters.AddWithValue("@timestamp", timestamp);
-                    cmdRaw.Parameters.AddWithValue("@sensor", sensor);
-                    cmdRaw.Parameters.AddWithValue("@value", value);
-                    await cmdRaw.ExecuteNonQueryAsync();
-
                     // Inserir dados processados
                     await using var cmdProcessed = dbConnection.CreateCommand();
-                    cmdProcessed.CommandText = @"INSERT INTO sensor_processed (
+                    cmdProcessed.CommandText = $@"INSERT INTO {processedTable} (
                         wavy_id, timestamp, sensor, processed_value, mean, stddev, is_outlier, delta, trend, risk_level, normalized_timestamp, on_schedule
                     ) VALUES (
                         @wavy_id, @timestamp, @sensor, @processed_value, @mean, @stddev, @is_outlier, @delta, @trend, @risk_level, @normalized_timestamp, @on_schedule
@@ -136,7 +144,7 @@ namespace agregators
             connection?.Close();
         }
 
-        private async Task<List<double>> ObterUltimosValoresAsync(string wavyId, string sensor, int n, string connStr)
+        private async Task<List<double>> ObterUltimosValoresAsync(string wavyId, string sensor, int n, string connStr, string tableName)
         {
             var valores = new List<double>();
 
@@ -146,7 +154,7 @@ namespace agregators
                 await conn.OpenAsync();
 
                 await using var cmd = conn.CreateCommand();
-                cmd.CommandText = @"SELECT value FROM sensor_data 
+                cmd.CommandText = $@"SELECT value FROM {tableName} 
                                     WHERE wavy_id = @wavy_id AND sensor = @sensor 
                                     ORDER BY timestamp DESC LIMIT @n";
                 cmd.Parameters.AddWithValue("@wavy_id", wavyId);

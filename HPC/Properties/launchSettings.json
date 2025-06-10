@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "HPC": {
+      "commandName": "Project"
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker"
+    }
+  }
+}

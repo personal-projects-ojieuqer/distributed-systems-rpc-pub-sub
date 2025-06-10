@@ -1,0 +1,700 @@
+name: dockercompose9129934196659631904
+services:
+  agregator_app_1:
+    build:
+      context: C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP2\sd-tp2-rpc-pub-sub\agregators
+      dockerfile: Dockerfile
+      args:
+        BUILD_CONFIGURATION: Debug
+      labels:
+        com.microsoft.created-by: visual-studio
+        com.microsoft.visual-studio.project-name: agregators
+      target: build
+    container_name: agregator_app_1
+    depends_on:
+      agregator1:
+        condition: service_started
+        required: true
+    entrypoint:
+      - dotnet
+      - --roll-forward
+      - Major
+      - /VSTools/DistrolessHelper/DistrolessHelper.dll
+      - --wait
+    environment:
+      AGG_TOKEN_AGG_01: tokenagr1
+      AGGREGATOR_ID: AGG_01
+      LISTEN_PORT: "13311"
+      MYSQL_DB: agregator1_db_tp2
+      MYSQL_HOST: agregator1
+      MYSQL_PASS: root
+      MYSQL_PORT: "3306"
+      MYSQL_USER: root
+      NUGET_FALLBACK_PACKAGES: /.nuget/fallbackpackages
+      SUBSCRIPTION_KEY: sensor.#.temperature
+    image: agregatorapp1:dev
+    labels:
+      com.microsoft.visualstudio.debuggee.arguments: ' --additionalProbingPath /.nuget/packages --additionalProbingPath /.nuget/fallbackpackages  "/app/bin/Debug/net8.0/agregators.dll"'
+      com.microsoft.visualstudio.debuggee.killprogram: dotnet --roll-forward Major /VSTools/DistrolessHelper/DistrolessHelper.dll --stop dotnet
+      com.microsoft.visualstudio.debuggee.program: dotnet
+      com.microsoft.visualstudio.debuggee.workingdirectory: /app
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 13311
+        published: "5001"
+        protocol: tcp
+    tty: true
+    volumes:
+      - type: bind
+        source: C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP2\sd-tp2-rpc-pub-sub\agregators\autorizacoes
+        target: /app/autorizacoes
+        bind:
+          create_host_path: true
+      - type: bind
+        source: C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP2\sd-tp2-rpc-pub-sub\agregators
+        target: /app
+        bind:
+          create_host_path: true
+      - type: bind
+        source: C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP2\sd-tp2-rpc-pub-sub\agregators
+        target: /src
+        bind:
+          create_host_path: true
+      - type: bind
+        source: C:\Users\mfreq\vsdbg\vs2017u5
+        target: /remote_debugger
+        bind:
+          create_host_path: true
+      - type: bind
+        source: C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Sdks\Microsoft.Docker.Sdk\tools\linux-x64\net8.0
+        target: /VSTools
+        read_only: true
+        bind:
+          create_host_path: true
+      - type: bind
+        source: C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\HotReload
+        target: /HotReloadAgent
+        read_only: true
+        bind:
+          create_host_path: true
+      - type: bind
+        source: C:\Users\mfreq\.nuget\packages
+        target: /.nuget/packages
+        read_only: true
+        bind:
+          create_host_path: true
+      - type: bind
+        source: C:\Program Files (x86)\Microsoft Visual Studio\Shared\NuGetPackages
+        target: /.nuget/fallbackpackages
+        read_only: true
+        bind:
+          create_host_path: true
+  agregator_app_2:
+    build:
+      context: C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP2\sd-tp2-rpc-pub-sub\agregators
+      dockerfile: Dockerfile
+      args:
+        BUILD_CONFIGURATION: Debug
+      labels:
+        com.microsoft.created-by: visual-studio
+        com.microsoft.visual-studio.project-name: agregators
+      target: build
+    container_name: agregator_app_2
+    depends_on:
+      agregator2:
+        condition: service_started
+        required: true
+    entrypoint:
+      - dotnet
+      - --roll-forward
+      - Major
+      - /VSTools/DistrolessHelper/DistrolessHelper.dll
+      - --wait
+    environment:
+      AGG_TOKEN_AGG_02: tokenagr2
+      AGGREGATOR_ID: AGG_02
+      LISTEN_PORT: "13312"
+      MYSQL_DB: agregator2_db_tp2
+      MYSQL_HOST: agregator2
+      MYSQL_PASS: root
+      MYSQL_PORT: "3306"
+      MYSQL_USER: root
+      NUGET_FALLBACK_PACKAGES: /.nuget/fallbackpackages
+      SUBSCRIPTION_KEY: sensor.#.gyroscope
+    image: agregatorapp2:dev
+    labels:
+      com.microsoft.visualstudio.debuggee.arguments: ' --additionalProbingPath /.nuget/packages --additionalProbingPath /.nuget/fallbackpackages  "/app/bin/Debug/net8.0/agregators.dll"'
+      com.microsoft.visualstudio.debuggee.killprogram: dotnet --roll-forward Major /VSTools/DistrolessHelper/DistrolessHelper.dll --stop dotnet
+      com.microsoft.visualstudio.debuggee.program: dotnet
+      com.microsoft.visualstudio.debuggee.workingdirectory: /app
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 13312
+        published: "5002"
+        protocol: tcp
+    tty: true
+    volumes:
+      - type: bind
+        source: C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP2\sd-tp2-rpc-pub-sub\agregators\autorizacoes
+        target: /app/autorizacoes
+        bind:
+          create_host_path: true
+      - type: bind
+        source: C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP2\sd-tp2-rpc-pub-sub\agregators
+        target: /app
+        bind:
+          create_host_path: true
+      - type: bind
+        source: C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP2\sd-tp2-rpc-pub-sub\agregators
+        target: /src
+        bind:
+          create_host_path: true
+      - type: bind
+        source: C:\Users\mfreq\vsdbg\vs2017u5
+        target: /remote_debugger
+        bind:
+          create_host_path: true
+      - type: bind
+        source: C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Sdks\Microsoft.Docker.Sdk\tools\linux-x64\net8.0
+        target: /VSTools
+        read_only: true
+        bind:
+          create_host_path: true
+      - type: bind
+        source: C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\HotReload
+        target: /HotReloadAgent
+        read_only: true
+        bind:
+          create_host_path: true
+      - type: bind
+        source: C:\Users\mfreq\.nuget\packages
+        target: /.nuget/packages
+        read_only: true
+        bind:
+          create_host_path: true
+      - type: bind
+        source: C:\Program Files (x86)\Microsoft Visual Studio\Shared\NuGetPackages
+        target: /.nuget/fallbackpackages
+        read_only: true
+        bind:
+          create_host_path: true
+  agregator_app_3:
+    build:
+      context: C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP2\sd-tp2-rpc-pub-sub\agregators
+      dockerfile: Dockerfile
+      args:
+        BUILD_CONFIGURATION: Debug
+      labels:
+        com.microsoft.created-by: visual-studio
+        com.microsoft.visual-studio.project-name: agregators
+      target: build
+    container_name: agregator_app_3
+    depends_on:
+      agregator3:
+        condition: service_started
+        required: true
+    entrypoint:
+      - dotnet
+      - --roll-forward
+      - Major
+      - /VSTools/DistrolessHelper/DistrolessHelper.dll
+      - --wait
+    environment:
+      AGG_TOKEN_AGG_03: tokenagr3
+      AGGREGATOR_ID: AGG_03
+      LISTEN_PORT: "13313"
+      MYSQL_DB: agregator3_db_tp2
+      MYSQL_HOST: agregator3
+      MYSQL_PASS: root
+      MYSQL_PORT: "3306"
+      MYSQL_USER: root
+      NUGET_FALLBACK_PACKAGES: /.nuget/fallbackpackages
+      SUBSCRIPTION_KEY: sensor.#.hydrophone
+    image: agregatorapp3:dev
+    labels:
+      com.microsoft.visualstudio.debuggee.arguments: ' --additionalProbingPath /.nuget/packages --additionalProbingPath /.nuget/fallbackpackages  "/app/bin/Debug/net8.0/agregators.dll"'
+      com.microsoft.visualstudio.debuggee.killprogram: dotnet --roll-forward Major /VSTools/DistrolessHelper/DistrolessHelper.dll --stop dotnet
+      com.microsoft.visualstudio.debuggee.program: dotnet
+      com.microsoft.visualstudio.debuggee.workingdirectory: /app
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 13313
+        published: "5003"
+        protocol: tcp
+    tty: true
+    volumes:
+      - type: bind
+        source: C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP2\sd-tp2-rpc-pub-sub\agregators
+        target: /app
+        bind:
+          create_host_path: true
+      - type: bind
+        source: C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP2\sd-tp2-rpc-pub-sub\agregators
+        target: /src
+        bind:
+          create_host_path: true
+      - type: bind
+        source: C:\Users\mfreq\vsdbg\vs2017u5
+        target: /remote_debugger
+        bind:
+          create_host_path: true
+      - type: bind
+        source: C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Sdks\Microsoft.Docker.Sdk\tools\linux-x64\net8.0
+        target: /VSTools
+        read_only: true
+        bind:
+          create_host_path: true
+      - type: bind
+        source: C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\HotReload
+        target: /HotReloadAgent
+        read_only: true
+        bind:
+          create_host_path: true
+      - type: bind
+        source: C:\Users\mfreq\.nuget\packages
+        target: /.nuget/packages
+        read_only: true
+        bind:
+          create_host_path: true
+      - type: bind
+        source: C:\Program Files (x86)\Microsoft Visual Studio\Shared\NuGetPackages
+        target: /.nuget/fallbackpackages
+        read_only: true
+        bind:
+          create_host_path: true
+  agregator_app_4:
+    build:
+      context: C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP2\sd-tp2-rpc-pub-sub\agregators
+      dockerfile: Dockerfile
+      args:
+        BUILD_CONFIGURATION: Debug
+      labels:
+        com.microsoft.created-by: visual-studio
+        com.microsoft.visual-studio.project-name: agregators
+      target: build
+    container_name: agregator_app_4
+    depends_on:
+      agregator4:
+        condition: service_started
+        required: true
+    entrypoint:
+      - dotnet
+      - --roll-forward
+      - Major
+      - /VSTools/DistrolessHelper/DistrolessHelper.dll
+      - --wait
+    environment:
+      AGGREGATOR_ID: AGG_04
+      LISTEN_PORT: "13314"
+      MYSQL_DB: agregator4_db_tp2
+      MYSQL_HOST: agregator4
+      MYSQL_PASS: root
+      MYSQL_PORT: "3306"
+      MYSQL_USER: root
+      NUGET_FALLBACK_PACKAGES: /.nuget/fallbackpackages
+      SUBSCRIPTION_KEY: sensor.#.accelerometer
+    image: agregatorapp4:dev
+    labels:
+      com.microsoft.visualstudio.debuggee.arguments: ' --additionalProbingPath /.nuget/packages --additionalProbingPath /.nuget/fallbackpackages  "/app/bin/Debug/net8.0/agregators.dll"'
+      com.microsoft.visualstudio.debuggee.killprogram: dotnet --roll-forward Major /VSTools/DistrolessHelper/DistrolessHelper.dll --stop dotnet
+      com.microsoft.visualstudio.debuggee.program: dotnet
+      com.microsoft.visualstudio.debuggee.workingdirectory: /app
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 13314
+        published: "5004"
+        protocol: tcp
+    tty: true
+    volumes:
+      - type: bind
+        source: C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP2\sd-tp2-rpc-pub-sub\agregators
+        target: /app
+        bind:
+          create_host_path: true
+      - type: bind
+        source: C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP2\sd-tp2-rpc-pub-sub\agregators
+        target: /src
+        bind:
+          create_host_path: true
+      - type: bind
+        source: C:\Users\mfreq\vsdbg\vs2017u5
+        target: /remote_debugger
+        bind:
+          create_host_path: true
+      - type: bind
+        source: C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Sdks\Microsoft.Docker.Sdk\tools\linux-x64\net8.0
+        target: /VSTools
+        read_only: true
+        bind:
+          create_host_path: true
+      - type: bind
+        source: C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\HotReload
+        target: /HotReloadAgent
+        read_only: true
+        bind:
+          create_host_path: true
+      - type: bind
+        source: C:\Users\mfreq\.nuget\packages
+        target: /.nuget/packages
+        read_only: true
+        bind:
+          create_host_path: true
+      - type: bind
+        source: C:\Program Files (x86)\Microsoft Visual Studio\Shared\NuGetPackages
+        target: /.nuget/fallbackpackages
+        read_only: true
+        bind:
+          create_host_path: true
+  agregator1:
+    container_name: mysql_agregator1_tp2
+    environment:
+      MYSQL_DATABASE: agregator1_db_tp2
+      MYSQL_ROOT_PASSWORD: root
+    image: mysql:8.0
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 3306
+        published: "3315"
+        protocol: tcp
+    restart: always
+    volumes:
+      - type: bind
+        source: C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP2\sd-tp2-rpc-pub-sub\mysql-agregator1
+        target: /docker-entrypoint-initdb.d
+        bind:
+          create_host_path: true
+      - type: volume
+        source: mysql-ag1-data
+        target: /var/lib/mysql
+        volume: {}
+  agregator2:
+    container_name: mysql_agregator2_tp2
+    environment:
+      MYSQL_DATABASE: agregator2_db_tp2
+      MYSQL_ROOT_PASSWORD: root
+    image: mysql:8.0
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 3306
+        published: "3316"
+        protocol: tcp
+    restart: always
+    volumes:
+      - type: bind
+        source: C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP2\sd-tp2-rpc-pub-sub\mysql-agregator2
+        target: /docker-entrypoint-initdb.d
+        bind:
+          create_host_path: true
+      - type: volume
+        source: mysql-ag2-data
+        target: /var/lib/mysql
+        volume: {}
+  agregator3:
+    container_name: mysql_agregator3_tp2
+    environment:
+      MYSQL_DATABASE: agregator3_db_tp2
+      MYSQL_ROOT_PASSWORD: root
+    image: mysql:8.0
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 3306
+        published: "3317"
+        protocol: tcp
+    restart: always
+    volumes:
+      - type: bind
+        source: C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP2\sd-tp2-rpc-pub-sub\mysql-agregator3
+        target: /docker-entrypoint-initdb.d
+        bind:
+          create_host_path: true
+      - type: volume
+        source: mysql-ag3-data
+        target: /var/lib/mysql
+        volume: {}
+  agregator4:
+    container_name: mysql_agregator4_tp2
+    environment:
+      MYSQL_DATABASE: agregator4_db_tp2
+      MYSQL_ROOT_PASSWORD: root
+    image: mysql:8.0
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 3306
+        published: "3318"
+        protocol: tcp
+    restart: always
+    volumes:
+      - type: bind
+        source: C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP2\sd-tp2-rpc-pub-sub\mysql-agregator4
+        target: /docker-entrypoint-initdb.d
+        bind:
+          create_host_path: true
+      - type: volume
+        source: mysql-ag4-data
+        target: /var/lib/mysql
+        volume: {}
+  hpc:
+    build:
+      context: C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP2\sd-tp2-rpc-pub-sub\hpc
+      dockerfile: Dockerfile
+    container_name: hpc_app
+    depends_on:
+      server:
+        condition: service_started
+        required: true
+    environment:
+      ASPNETCORE_URLS: https://+:5001
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 5000
+        published: "5005"
+        protocol: tcp
+  preprocessrpc:
+    build:
+      context: C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP2\sd-tp2-rpc-pub-sub\preprocessrpc
+      dockerfile: Dockerfile
+      args:
+        BUILD_CONFIGURATION: Debug
+      labels:
+        com.microsoft.created-by: visual-studio
+        com.microsoft.visual-studio.project-name: preprocessrpc
+      target: build
+    container_name: preprocessrpc
+    entrypoint:
+      - dotnet
+      - --roll-forward
+      - Major
+      - /VSTools/DistrolessHelper/DistrolessHelper.dll
+      - --wait
+    environment:
+      NUGET_FALLBACK_PACKAGES: /.nuget/fallbackpackages
+    image: preprocessrpc:dev
+    labels:
+      com.microsoft.visualstudio.debuggee.arguments: ' --additionalProbingPath /.nuget/packages --additionalProbingPath /.nuget/fallbackpackages  "/app/bin/Debug/net8.0/preprocessrpc.dll"'
+      com.microsoft.visualstudio.debuggee.killprogram: dotnet --roll-forward Major /VSTools/DistrolessHelper/DistrolessHelper.dll --stop dotnet
+      com.microsoft.visualstudio.debuggee.program: dotnet
+      com.microsoft.visualstudio.debuggee.workingdirectory: /app
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 8080
+        published: "5009"
+        protocol: tcp
+    tty: true
+    volumes:
+      - type: bind
+        source: C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP2\sd-tp2-rpc-pub-sub\preprocessrpc
+        target: /app
+        bind:
+          create_host_path: true
+      - type: bind
+        source: C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP2\sd-tp2-rpc-pub-sub\preprocessrpc
+        target: /src
+        bind:
+          create_host_path: true
+      - type: bind
+        source: C:\Users\mfreq\vsdbg\vs2017u5
+        target: /remote_debugger
+        bind:
+          create_host_path: true
+      - type: bind
+        source: C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Sdks\Microsoft.Docker.Sdk\tools\linux-x64\net8.0
+        target: /VSTools
+        read_only: true
+        bind:
+          create_host_path: true
+      - type: bind
+        source: C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\HotReload
+        target: /HotReloadAgent
+        read_only: true
+        bind:
+          create_host_path: true
+      - type: bind
+        source: C:\Users\mfreq\.nuget\packages
+        target: /.nuget/packages
+        read_only: true
+        bind:
+          create_host_path: true
+      - type: bind
+        source: C:\Program Files (x86)\Microsoft Visual Studio\Shared\NuGetPackages
+        target: /.nuget/fallbackpackages
+        read_only: true
+        bind:
+          create_host_path: true
+  rabbitmq:
+    container_name: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_PASS: sdtp2
+      RABBITMQ_DEFAULT_USER: sdtp2
+    image: rabbitmq:3-management
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 5672
+        published: "5672"
+        protocol: tcp
+      - mode: ingress
+        target: 15672
+        published: "15672"
+        protocol: tcp
+  server:
+    container_name: mysql_server_tp2
+    environment:
+      MYSQL_DATABASE: server-db_tp2
+      MYSQL_ROOT_PASSWORD: root
+    image: mysql:8.0
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 3306
+        published: "3350"
+        protocol: tcp
+    restart: always
+    volumes:
+      - type: bind
+        source: C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP2\sd-tp2-rpc-pub-sub\mysql-server
+        target: /docker-entrypoint-initdb.d
+        bind:
+          create_host_path: true
+      - type: volume
+        source: mysql-server-data
+        target: /var/lib/mysql
+        volume: {}
+  server_app:
+    build:
+      context: C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP2\sd-tp2-rpc-pub-sub\server
+      dockerfile: Dockerfile
+      args:
+        BUILD_CONFIGURATION: Debug
+      labels:
+        com.microsoft.created-by: visual-studio
+        com.microsoft.visual-studio.project-name: server
+      target: build
+    container_name: server_app
+    depends_on:
+      agregator1:
+        condition: service_started
+        required: true
+      agregator2:
+        condition: service_started
+        required: true
+      agregator3:
+        condition: service_started
+        required: true
+      server:
+        condition: service_started
+        required: true
+    entrypoint:
+      - dotnet
+      - --roll-forward
+      - Major
+      - /VSTools/DistrolessHelper/DistrolessHelper.dll
+      - --wait
+    environment:
+      AGG_IDS: AGG_01,AGG_02,AGG_03
+      AGG_TOKEN_AGG_01: tokenagr1
+      AGG_TOKEN_AGG_02: tokenagr2
+      AGG_TOKEN_AGG_03: tokenagr3
+      HPC_ADDRESS: https://hpc:5000
+      MYSQL_DB_AGG_01: agregator1_db
+      MYSQL_DB_AGG_02: agregator2_db
+      MYSQL_DB_AGG_03: agregator3_db
+      MYSQL_DB_SERVER: server-db
+      MYSQL_HOST_AGG_01: agregator1
+      MYSQL_HOST_AGG_02: agregator2
+      MYSQL_HOST_AGG_03: agregator3
+      MYSQL_HOST_SERVER: server
+      MYSQL_PASS: root
+      MYSQL_PORT: "3306"
+      MYSQL_USER: root
+      NUGET_FALLBACK_PACKAGES: /.nuget/fallbackpackages
+      SERVER_PORT: "15000"
+    image: serverapp:dev
+    labels:
+      com.microsoft.visualstudio.debuggee.arguments: ' --additionalProbingPath /.nuget/packages --additionalProbingPath /.nuget/fallbackpackages  "/app/bin/Debug/net8.0/server.dll"'
+      com.microsoft.visualstudio.debuggee.killprogram: dotnet --roll-forward Major /VSTools/DistrolessHelper/DistrolessHelper.dll --stop dotnet
+      com.microsoft.visualstudio.debuggee.program: dotnet
+      com.microsoft.visualstudio.debuggee.workingdirectory: /app
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 15000
+        published: "5004"
+        protocol: tcp
+    tty: true
+    volumes:
+      - type: bind
+        source: C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP2\sd-tp2-rpc-pub-sub\server
+        target: /app
+        bind:
+          create_host_path: true
+      - type: bind
+        source: C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP2\sd-tp2-rpc-pub-sub\server
+        target: /src
+        bind:
+          create_host_path: true
+      - type: bind
+        source: C:\Users\mfreq\vsdbg\vs2017u5
+        target: /remote_debugger
+        bind:
+          create_host_path: true
+      - type: bind
+        source: C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Sdks\Microsoft.Docker.Sdk\tools\linux-x64\net8.0
+        target: /VSTools
+        read_only: true
+        bind:
+          create_host_path: true
+      - type: bind
+        source: C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\HotReload
+        target: /HotReloadAgent
+        read_only: true
+        bind:
+          create_host_path: true
+      - type: bind
+        source: C:\Users\mfreq\.nuget\packages
+        target: /.nuget/packages
+        read_only: true
+        bind:
+          create_host_path: true
+      - type: bind
+        source: C:\Program Files (x86)\Microsoft Visual Studio\Shared\NuGetPackages
+        target: /.nuget/fallbackpackages
+        read_only: true
+        bind:
+          create_host_path: true
+networks:
+  default:
+    name: dockercompose9129934196659631904_default
+volumes:
+  mysql-ag1-data:
+    name: dockercompose9129934196659631904_mysql-ag1-data
+  mysql-ag2-data:
+    name: dockercompose9129934196659631904_mysql-ag2-data
+  mysql-ag3-data:
+    name: dockercompose9129934196659631904_mysql-ag3-data
+  mysql-ag4-data:
+    name: dockercompose9129934196659631904_mysql-ag4-data
+  mysql-server-data:
+    name: dockercompose9129934196659631904_mysql-server-data
