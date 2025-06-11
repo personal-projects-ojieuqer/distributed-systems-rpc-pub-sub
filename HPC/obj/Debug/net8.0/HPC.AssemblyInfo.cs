@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("HPC")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+dc2a7b6d1c4da136b9d55ed85cea595286938157")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+59fd0c0ab19a3a894b0785145aee09f67524421c")]
 [assembly: System.Reflection.AssemblyProductAttribute("HPC")]
 [assembly: System.Reflection.AssemblyTitleAttribute("HPC")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

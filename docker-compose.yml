@@ -97,13 +97,13 @@ services:
       AGG_TOKEN_AGG_01: tokenagr1
       #SUBSCRIPTION_KEY: "sensor.#.temperature"
       SUBSCRIPTION_KEY: "sensor.#.temperature,sensor.#.hydrophone"
-
+      AES_KEY: "sistem-dist-2025"
     ports:
       - "5001:13311"
     volumes:
-      - ./agregators/autorizacoes:/app/autorizacoes
+        - ./autorizacoes:/app/autorizacoes
 
-  agregator_app_2:
+  agregator_app2:
     build: 
             context: ./agregators
             dockerfile: Dockerfile
@@ -120,10 +120,11 @@ services:
       LISTEN_PORT: 13312
       AGG_TOKEN_AGG_02: tokenagr2 
       SUBSCRIPTION_KEY: "sensor.#.gyroscope"
+      AES_KEY: "sistem-dist-2025"
     ports:
       - "5002:13312"
     volumes:
-      - ./agregators/autorizacoes:/app/autorizacoes
+       - ./autorizacoes:/app/autorizacoes
 
   agregator_app_3:
     build: 
@@ -141,9 +142,12 @@ services:
       MYSQL_PASS: root
       LISTEN_PORT: 13313
       AGG_TOKEN_AGG_03: tokenagr3
-      SUBSCRIPTION_KEY: "sensor.#.hydrophone"
+      SUBSCRIPTION_KEY: "sensor.#.accelerometer"
+      AES_KEY: "sistem-dist-2025"
     ports:
       - "5003:13313"
+    volumes:
+      - ./autorizacoes:/app/autorizacoes
 
   # agregator_app_4:
   #     build: 
@@ -200,9 +204,11 @@ services:
         AGG_TOKEN_AGG_02: tokenagr2
         AGG_TOKEN_AGG_03: tokenagr3
         HPC_ADDRESS: http://hpc_app:5001
-
+        AES_KEY: "sistem-dist-2025"
     ports:
         - "5005:15000"
+    volumes:
+        - ./autorizacoes:/app/keys
 
   hpc:
     build:
@@ -223,5 +229,5 @@ volumes:
   mysql-ag1-data:
   mysql-ag2-data:
   mysql-ag3-data:
-  mysql-ag4-data:
+  #mysql-ag4-data:
   mysql-server-data:

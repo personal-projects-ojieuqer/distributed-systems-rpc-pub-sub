@@ -82,6 +82,8 @@ namespace agregators
 
                     await using var dbConnection = new MySqlConnection(connString);
                     await dbConnection.OpenAsync();
+                    Console.WriteLine($"[{aggregatorId}] Ligação à base de dados local estabelecida.");
+
 
                     // Inserir dados crus imediatamente
                     await using var cmdRaw = dbConnection.CreateCommand();

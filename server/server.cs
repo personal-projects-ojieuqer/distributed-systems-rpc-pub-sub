@@ -1,10 +1,9 @@
-﻿// Program.cs adaptado para usar HPC após guardar os dados
-// Program.cs adaptado para guardar previsões e dados RAW em tabelas separadas por tipo de sensor
-using Grpc.Net.Client;
+﻿using Grpc.Net.Client;
 using HpcService;
 using MySql.Data.MySqlClient;
 using System.Net;
 using System.Net.Sockets;
+using System.Security.Cryptography;
 using System.Text;
 
 class Program
@@ -13,8 +12,18 @@ class Program
     private static string centralConnStr = string.Empty;
     private static HpcAnalysisService.HpcAnalysisServiceClient? hpcClient;
 
+    private static RSACryptoServiceProvider rsa;
+
     static async Task Main()
     {
+        // Geração da chave pública RSA
+        rsa = new RSACryptoServiceProvider(2048);
+        string publicKeyXml = rsa.ToXmlString(false); // apenas chave pública
+
+        Directory.CreateDirectory("/app/keys");
+        File.WriteAllText("/app/keys/publicKey.xml", publicKeyXml);
+        Console.WriteLine("[SERVIDOR] 🔐 Chave pública RSA gerada e exportada para /app/keys/publicKey.xml");
+
         Console.WriteLine("Servidor iniciado e pronto para receber dados dos agregadores via TCP.");
 
         string mysqlPort = Environment.GetEnvironmentVariable("MYSQL_PORT")!;
@@ -44,8 +53,33 @@ class Program
     {
         try
         {
+            string clientIp = ((IPEndPoint)client.Client.RemoteEndPoint!).Address.ToString();
+
             using var stream = client.GetStream();
             using var reader = new StreamReader(stream, Encoding.UTF8);
+            using var writer = new StreamWriter(stream, Encoding.UTF8) { AutoFlush = true };
+
+            // 1. Receber chave AES encriptada com RSA
+            string? encryptedAesKeyBase64 = await reader.ReadLineAsync();
+            if (string.IsNullOrEmpty(encryptedAesKeyBase64))
+            {
+                Console.WriteLine($"[SERVIDOR] ❌ Chave AES não recebida de {clientIp}");
+                client.Close(); return;
+            }
+
+            byte[] encryptedAesKey = Convert.FromBase64String(encryptedAesKeyBase64);
+            byte[] aesKey;
+            try
+            {
+                aesKey = rsa.Decrypt(encryptedAesKey, false);
+                Console.WriteLine($"[SERVIDOR] 🔓 Chave AES recebida e decifrada com sucesso de {clientIp}");
+            }
+            catch
+            {
+                Console.WriteLine($"[SERVIDOR] ❌ Falha ao decifrar chave AES de {clientIp}");
+                client.Close(); return;
+            }
+
             using var conn = new MySqlConnection(centralConnStr);
             await conn.OpenAsync();
 
@@ -54,25 +88,20 @@ class Program
 
             while ((line = await reader.ReadLineAsync()) != null)
             {
-                //AQUIIII
+                try
+                {
+                    line = AesEncryption.DecryptStringAes(line, aesKey);
+                }
+                catch
+                {
+                    Console.WriteLine($"[SERVIDOR] ❌ Linha inválida ou mal cifrada de {clientIp}");
+                    continue;
+                }
+
                 Console.WriteLine($"[SERVIDOR] Linha recebida: {line}");
-                //if (line.StartsWith("HANDSHAKE:"))
-                //{
-                //    var handshakeParts = line.Split(':');
-                //    string id = handshakeParts[1];
-                //    string token = handshakeParts[2];
-                //    string? expected = Environment.GetEnvironmentVariable($"AGG_TOKEN_{id}");
-                //    if (expected is null || expected != token)
-                //    {
-                //        Console.WriteLine($"Token inválido para {id}. Ligação recusada.");
-                //        client.Close(); return;
-                //    }
-                //    Console.WriteLine($"Handshake com {id} verificado.");
-                //    continue;
-                //}
 
                 if (line.StartsWith("START:")) { currentAgg = line.Split(':')[1]; Console.WriteLine($"Início de {currentAgg}"); continue; }
-                if (line.StartsWith("END:")) { Console.WriteLine($" Fim de {line.Split(':')[1]}"); continue; }
+                if (line.StartsWith("END:")) { Console.WriteLine($"Fim de {line.Split(':')[1]}"); continue; }
 
                 var parts = line.Split(',', 5);
                 if (parts.Length != 5) { Console.WriteLine("Linha mal formatada: " + line); continue; }
@@ -82,6 +111,8 @@ class Program
                 if (!DateTime.TryParse(parts[2], out var timestamp)) { Console.WriteLine("Timestamp inválido: " + parts[2]); continue; }
                 string sensor = parts[3];
                 string value = parts[4];
+
+                sensor = char.ToUpper(sensor[0]) + sensor.Substring(1).ToLower();
 
                 string rawTable = sensor switch
                 {
@@ -133,17 +164,17 @@ class Program
                     {
                         using var insertPred = conn.CreateCommand();
                         insertPred.CommandText = $@"
-                            INSERT INTO {projectionTable} (
-                                wavy_id, base_timestamp, minuto_offset,
-                                valor_previsto_modeloA, valor_previsto_modeloB,
-                                modelo_mais_confiavel, classificacao, explicacao,
-                                confianca, padrao_detectado, gerado_em
-                            ) VALUES (
-                                @w, @ts, @offset,
-                                @valA, @valB,
-                                @modelo, @classif, @explicacao,
-                                @conf, @padrao, @now
-                            )";
+                        INSERT INTO {projectionTable} (
+                            wavy_id, base_timestamp, minuto_offset,
+                            valor_previsto_modeloA, valor_previsto_modeloB,
+                            modelo_mais_confiavel, classificacao, explicacao,
+                            confianca, padrao_detectado, gerado_em
+                        ) VALUES (
+                            @w, @ts, @offset,
+                            @valA, @valB,
+                            @modelo, @classif, @explicacao,
+                            @conf, @padrao, @now
+                        )";
 
                         insertPred.Parameters.AddWithValue("@w", wavyId);
                         insertPred.Parameters.AddWithValue("@ts", timestamp);
@@ -189,4 +220,3 @@ class Program
         return lista;
     }
 }
-
