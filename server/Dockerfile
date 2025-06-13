@@ -1,16 +1,14 @@
-#Docker file do server
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /app
 
-COPY . .
+COPY ./server.csproj ./  
 RUN dotnet restore
+
+COPY . .
 RUN dotnet publish -c Release -o out
 
-FROM mcr.microsoft.com/dotnet/runtime:8.0
+FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
-COPY --from=build /app/out ./
-
-
-ENV ASPNETCORE_ENVIRONMENT=Production
+COPY --from=build /app/out .
 
 ENTRYPOINT ["dotnet", "server.dll"]

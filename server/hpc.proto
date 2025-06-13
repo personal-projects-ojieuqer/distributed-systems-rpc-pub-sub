@@ -1,0 +1,23 @@
+syntax = "proto3";
+option csharp_namespace = "HpcService";
+
+service HpcAnalysisService {
+  rpc PreverDados (HpcForecastRequest) returns (HpcForecastResponse);
+}
+
+message HpcForecastRequest {
+  string wavyId = 1;
+  string sensor = 2;
+  string timestamp = 3;
+  repeated double historico = 4;
+}
+
+message HpcForecastResponse {
+  repeated double PrevisoesModeloA = 1;
+  repeated double PrevisoesModeloB = 2;
+  string ModeloMaisConfiavel = 3;
+  string Classificacao = 4;
+  string Explicacao = 5;
+  double Confianca = 6;
+  string PadraoDetectado = 7;
+}

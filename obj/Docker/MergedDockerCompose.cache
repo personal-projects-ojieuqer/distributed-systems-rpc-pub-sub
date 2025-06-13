@@ -10,6 +10,7 @@ services:
         condition: service_started
         required: true
     environment:
+      AES_KEY: sistem-dist-2025
       AGG_TOKEN_AGG_01: tokenagr1
       AGGREGATOR_ID: AGG_01
       LISTEN_PORT: "13311"
@@ -18,7 +19,7 @@ services:
       MYSQL_PASS: root
       MYSQL_PORT: "3306"
       MYSQL_USER: root
-      SUBSCRIPTION_KEY: sensor.#.temperature
+      SUBSCRIPTION_KEY: sensor.#.temperature,sensor.#.hydrophone
     networks:
       default: null
     ports:
@@ -28,39 +29,7 @@ services:
         protocol: tcp
     volumes:
       - type: bind
-        source: C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP2\sd-tp2-rpc-pub-sub\agregators\autorizacoes
-        target: /app/autorizacoes
-        bind:
-          create_host_path: true
-  agregator_app_2:
-    build:
-      context: C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP2\sd-tp2-rpc-pub-sub\agregators
-      dockerfile: Dockerfile
-    container_name: agregator_app_2
-    depends_on:
-      agregator2:
-        condition: service_started
-        required: true
-    environment:
-      AGG_TOKEN_AGG_02: tokenagr2
-      AGGREGATOR_ID: AGG_02
-      LISTEN_PORT: "13312"
-      MYSQL_DB: agregator2_db_tp2
-      MYSQL_HOST: agregator2
-      MYSQL_PASS: root
-      MYSQL_PORT: "3306"
-      MYSQL_USER: root
-      SUBSCRIPTION_KEY: sensor.#
-    networks:
-      default: null
-    ports:
-      - mode: ingress
-        target: 13312
-        published: "5002"
-        protocol: tcp
-    volumes:
-      - type: bind
-        source: C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP2\sd-tp2-rpc-pub-sub\agregators\autorizacoes
+        source: C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP2\sd-tp2-rpc-pub-sub\autorizacoes
         target: /app/autorizacoes
         bind:
           create_host_path: true
@@ -74,6 +43,7 @@ services:
         condition: service_started
         required: true
     environment:
+      AES_KEY: sistem-dist-2025
       AGG_TOKEN_AGG_03: tokenagr3
       AGGREGATOR_ID: AGG_03
       LISTEN_PORT: "13313"
@@ -82,7 +52,7 @@ services:
       MYSQL_PASS: root
       MYSQL_PORT: "3306"
       MYSQL_USER: root
-      SUBSCRIPTION_KEY: sensor.wavy_001.#
+      SUBSCRIPTION_KEY: sensor.#.accelerometer
     networks:
       default: null
     ports:
@@ -92,7 +62,40 @@ services:
         protocol: tcp
     volumes:
       - type: bind
-        source: C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP2\sd-tp2-rpc-pub-sub\agregators\autorizacoes
+        source: C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP2\sd-tp2-rpc-pub-sub\autorizacoes
+        target: /app/autorizacoes
+        bind:
+          create_host_path: true
+  agregator_app2:
+    build:
+      context: C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP2\sd-tp2-rpc-pub-sub\agregators
+      dockerfile: Dockerfile
+    container_name: agregator_app_2
+    depends_on:
+      agregator2:
+        condition: service_started
+        required: true
+    environment:
+      AES_KEY: sistem-dist-2025
+      AGG_TOKEN_AGG_02: tokenagr2
+      AGGREGATOR_ID: AGG_02
+      LISTEN_PORT: "13312"
+      MYSQL_DB: agregator2_db_tp2
+      MYSQL_HOST: agregator2
+      MYSQL_PASS: root
+      MYSQL_PORT: "3306"
+      MYSQL_USER: root
+      SUBSCRIPTION_KEY: sensor.#.gyroscope
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 13312
+        published: "5002"
+        protocol: tcp
+    volumes:
+      - type: bind
+        source: C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP2\sd-tp2-rpc-pub-sub\autorizacoes
         target: /app/autorizacoes
         bind:
           create_host_path: true
@@ -168,6 +171,24 @@ services:
         source: mysql-ag3-data
         target: /var/lib/mysql
         volume: {}
+  hpc:
+    build:
+      context: C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP2\sd-tp2-rpc-pub-sub\hpc
+      dockerfile: Dockerfile
+    container_name: hpc_app
+    depends_on:
+      server:
+        condition: service_started
+        required: true
+    environment:
+      ASPNETCORE_URLS: https://+:5001
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 5001
+        published: "5008"
+        protocol: tcp
   preprocessrpc:
     build:
       context: C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP2\sd-tp2-rpc-pub-sub\preprocessrpc
@@ -197,10 +218,33 @@ services:
         target: 15672
         published: "15672"
         protocol: tcp
+  sdvisualizer-api:
+    build:
+      context: C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP2\sd-tp2-rpc-pub-sub
+      dockerfile: ./SDVisualizer.API/Dockerfile
+    depends_on:
+      server:
+        condition: service_started
+        required: true
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 80
+        published: "7171"
+        protocol: tcp
+    volumes:
+      - type: bind
+        source: C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP2\sd-tp2-rpc-pub-sub\SDVisualizer.API\appsettings.json
+        target: /app/appsettings.json
+        bind:
+          create_host_path: true
   server:
     container_name: mysql_server_tp2
     environment:
-      MYSQL_DATABASE: server-db_tp2
+      MYSQL_DATABASE: server_db_tp2
       MYSQL_ROOT_PASSWORD: root
     image: mysql:8.0
     networks:
@@ -208,7 +252,7 @@ services:
     ports:
       - mode: ingress
         target: 3306
-        published: "3350"
+        published: "3351"
         protocol: tcp
     restart: always
     volumes:
@@ -240,14 +284,16 @@ services:
         condition: service_started
         required: true
     environment:
+      AES_KEY: sistem-dist-2025
       AGG_IDS: AGG_01,AGG_02,AGG_03
       AGG_TOKEN_AGG_01: tokenagr1
       AGG_TOKEN_AGG_02: tokenagr2
       AGG_TOKEN_AGG_03: tokenagr3
-      MYSQL_DB_AGG_01: agregator1_db
-      MYSQL_DB_AGG_02: agregator2_db
-      MYSQL_DB_AGG_03: agregator3_db
-      MYSQL_DB_SERVER: server-db
+      HPC_ADDRESS: http://hpc_app:5001
+      MYSQL_DB_AGG_01: agregator1_db_tp2
+      MYSQL_DB_AGG_02: agregator2_db_tp2
+      MYSQL_DB_AGG_03: agregator3_db_tp2
+      MYSQL_DB_SERVER: server_db_tp2
       MYSQL_HOST_AGG_01: agregator1
       MYSQL_HOST_AGG_02: agregator2
       MYSQL_HOST_AGG_03: agregator3
@@ -261,8 +307,14 @@ services:
     ports:
       - mode: ingress
         target: 15000
-        published: "5004"
+        published: "5005"
         protocol: tcp
+    volumes:
+      - type: bind
+        source: C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP2\sd-tp2-rpc-pub-sub\autorizacoes
+        target: /app/keys
+        bind:
+          create_host_path: true
 networks:
   default:
     name: dockercompose9129934196659631904_default

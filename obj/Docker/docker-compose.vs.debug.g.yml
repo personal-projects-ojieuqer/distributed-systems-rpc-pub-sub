@@ -27,33 +27,6 @@ services:
       com.microsoft.visualstudio.debuggee.workingdirectory: "/app"
       com.microsoft.visualstudio.debuggee.killprogram: "dotnet --roll-forward Major /VSTools/DistrolessHelper/DistrolessHelper.dll --stop dotnet"
     tty: true
-  agregator_app_2:
-    image: agregatorapp2:dev
-    build:
-      args:
-        BUILD_CONFIGURATION: Debug
-      target: build
-      labels:
-        com.microsoft.created-by: "visual-studio"
-        com.microsoft.visual-studio.project-name: "agregators"
-    environment:
-      - NUGET_FALLBACK_PACKAGES=/.nuget/fallbackpackages
-    volumes:
-      - C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP2\sd-tp2-rpc-pub-sub\agregators:/app:rw
-      - C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP2\sd-tp2-rpc-pub-sub\agregators:/src:rw
-      - C:\Users\mfreq\vsdbg\vs2017u5:/remote_debugger:rw
-      - C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Sdks\Microsoft.Docker.Sdk\tools\linux-x64\net8.0:/VSTools:ro
-      - C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\HotReload:/HotReloadAgent:ro
-      - C:\Users\mfreq\.nuget\packages:/.nuget/packages:ro
-      - C:\Program Files (x86)\Microsoft Visual Studio\Shared\NuGetPackages:/.nuget/fallbackpackages:ro
-    entrypoint: "dotnet --roll-forward Major /VSTools/DistrolessHelper/DistrolessHelper.dll --wait"
-    labels:
-      com.microsoft.visualstudio.debuggee.program: "dotnet"
-      com.microsoft.visualstudio.debuggee.arguments: " --additionalProbingPath /.nuget/packages --additionalProbingPath /.nuget/fallbackpackages  \"/app/bin/Debug/net8.0/agregators.dll\""
-      com.microsoft.visualstudio.debuggee.workingdirectory: "/app"
-      com.microsoft.visualstudio.debuggee.killprogram: "dotnet --roll-forward Major /VSTools/DistrolessHelper/DistrolessHelper.dll --stop dotnet"
-    tty: true
-
   agregator_app_3:
     image: agregatorapp3:dev
     build:
@@ -81,8 +54,8 @@ services:
       com.microsoft.visualstudio.debuggee.killprogram: "dotnet --roll-forward Major /VSTools/DistrolessHelper/DistrolessHelper.dll --stop dotnet"
     tty: true
 
-  agregator_app_4:
-    image: agregatorapp4:dev
+  agregator_app2:
+    image: agregatorapp2:dev
     build:
       args:
         BUILD_CONFIGURATION: Debug
@@ -104,6 +77,33 @@ services:
     labels:
       com.microsoft.visualstudio.debuggee.program: "dotnet"
       com.microsoft.visualstudio.debuggee.arguments: " --additionalProbingPath /.nuget/packages --additionalProbingPath /.nuget/fallbackpackages  \"/app/bin/Debug/net8.0/agregators.dll\""
+      com.microsoft.visualstudio.debuggee.workingdirectory: "/app"
+      com.microsoft.visualstudio.debuggee.killprogram: "dotnet --roll-forward Major /VSTools/DistrolessHelper/DistrolessHelper.dll --stop dotnet"
+    tty: true
+
+  hpc:
+    image: hpc:dev
+    build:
+      args:
+        BUILD_CONFIGURATION: Debug
+      target: build
+      labels:
+        com.microsoft.created-by: "visual-studio"
+        com.microsoft.visual-studio.project-name: "HPC"
+    environment:
+      - NUGET_FALLBACK_PACKAGES=/.nuget/fallbackpackages
+    volumes:
+      - C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP2\sd-tp2-rpc-pub-sub\HPC:/app:rw
+      - C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP2\sd-tp2-rpc-pub-sub\hpc:/src:rw
+      - C:\Users\mfreq\vsdbg\vs2017u5:/remote_debugger:rw
+      - C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Sdks\Microsoft.Docker.Sdk\tools\linux-x64\net8.0:/VSTools:ro
+      - C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\HotReload:/HotReloadAgent:ro
+      - C:\Users\mfreq\.nuget\packages:/.nuget/packages:ro
+      - C:\Program Files (x86)\Microsoft Visual Studio\Shared\NuGetPackages:/.nuget/fallbackpackages:ro
+    entrypoint: "dotnet --roll-forward Major /VSTools/DistrolessHelper/DistrolessHelper.dll --wait"
+    labels:
+      com.microsoft.visualstudio.debuggee.program: "dotnet"
+      com.microsoft.visualstudio.debuggee.arguments: " --additionalProbingPath /.nuget/packages --additionalProbingPath /.nuget/fallbackpackages  \"/app/bin/Debug/net8.0/HPC.dll\""
       com.microsoft.visualstudio.debuggee.workingdirectory: "/app"
       com.microsoft.visualstudio.debuggee.killprogram: "dotnet --roll-forward Major /VSTools/DistrolessHelper/DistrolessHelper.dll --stop dotnet"
     tty: true

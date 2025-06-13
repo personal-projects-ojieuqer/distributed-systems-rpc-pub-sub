@@ -52,18 +52,18 @@ services:
     ports:
       - "3317:3306"
 
-  agregator4:
-    image: mysql:8.0
-    container_name: mysql_agregator4_tp2
-    restart: always
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: agregator4_db_tp2
-    volumes:
-      - ./mysql-agregator4:/docker-entrypoint-initdb.d
-      - mysql-ag4-data:/var/lib/mysql
-    ports:
-      - "3318:3306"
+#  agregator4:
+#    image: mysql:8.0
+#    container_name: mysql_agregator4_tp2
+#    restart: always
+#   environment:
+#      MYSQL_ROOT_PASSWORD: root
+#      MYSQL_DATABASE: agregator4_db_tp2
+#    volumes:
+#      - ./mysql-agregator4:/docker-entrypoint-initdb.d
+#      - mysql-ag4-data:/var/lib/mysql
+#    ports:
+#      - "3318:3306"
 
   server:
     image: mysql:8.0
@@ -71,12 +71,12 @@ services:
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: server-db_tp2
+      MYSQL_DATABASE: server_db_tp2
     volumes:
       - ./mysql-server:/docker-entrypoint-initdb.d
       - mysql-server-data:/var/lib/mysql
     ports:
-      - "3350:3306"
+      - "3351:3306"
 
   #agregadores em si
   agregator_app_1:
@@ -95,13 +95,15 @@ services:
       MYSQL_PASS: root
       LISTEN_PORT: 13311
       AGG_TOKEN_AGG_01: tokenagr1
-      SUBSCRIPTION_KEY: "sensor.#.temperature"
+      #SUBSCRIPTION_KEY: "sensor.#.temperature"
+      SUBSCRIPTION_KEY: "sensor.#.temperature,sensor.#.hydrophone"
+      AES_KEY: "sistem-dist-2025"
     ports:
       - "5001:13311"
     volumes:
-      - ./agregators/autorizacoes:/app/autorizacoes
+        - ./autorizacoes:/app/autorizacoes
 
-  agregator_app_2:
+  agregator_app2:
     build: 
             context: ./agregators
             dockerfile: Dockerfile
@@ -118,10 +120,11 @@ services:
       LISTEN_PORT: 13312
       AGG_TOKEN_AGG_02: tokenagr2 
       SUBSCRIPTION_KEY: "sensor.#.gyroscope"
+      AES_KEY: "sistem-dist-2025"
     ports:
       - "5002:13312"
     volumes:
-      - ./agregators/autorizacoes:/app/autorizacoes
+       - ./autorizacoes:/app/autorizacoes
 
   agregator_app_3:
     build: 
@@ -139,28 +142,12 @@ services:
       MYSQL_PASS: root
       LISTEN_PORT: 13313
       AGG_TOKEN_AGG_03: tokenagr3
-      SUBSCRIPTION_KEY: "sensor.#.hydrophone"
+      SUBSCRIPTION_KEY: "sensor.#.accelerometer"
+      AES_KEY: "sistem-dist-2025"
     ports:
       - "5003:13313"
-
-  agregator_app_4:
-      build: 
-              context: ./agregators
-              dockerfile: Dockerfile
-      container_name: agregator_app_4
-      depends_on:
-        - agregator4
-      environment:
-        AGGREGATOR_ID: AGG_04
-        MYSQL_HOST: agregator4
-        MYSQL_PORT: 3306
-        MYSQL_DB: agregator4_db_tp2
-        MYSQL_USER: root
-        MYSQL_PASS: root
-        LISTEN_PORT: 13314
-        SUBSCRIPTION_KEY: "sensor.#.accelerometer"
-      ports:
-        - "5004:13314"
+    volumes:
+      - ./autorizacoes:/app/autorizacoes
 
   preprocessrpc:
     build:
@@ -184,25 +171,59 @@ services:
         SERVER_PORT: 15000
         AGG_IDS: AGG_01,AGG_02,AGG_03
         MYSQL_HOST_AGG_01: agregator1
-        MYSQL_DB_AGG_01: agregator1_db
+        MYSQL_DB_AGG_01: agregator1_db_tp2
         MYSQL_HOST_AGG_02: agregator2
-        MYSQL_DB_AGG_02: agregator2_db
+        MYSQL_DB_AGG_02: agregator2_db_tp2
         MYSQL_HOST_AGG_03: agregator3
-        MYSQL_DB_AGG_03: agregator3_db
+        MYSQL_DB_AGG_03: agregator3_db_tp2
         MYSQL_PORT: 3306
         MYSQL_USER: root
         MYSQL_PASS: root
         MYSQL_HOST_SERVER: server
-        MYSQL_DB_SERVER: server-db
+        MYSQL_DB_SERVER: server_db_tp2
         AGG_TOKEN_AGG_01: tokenagr1
         AGG_TOKEN_AGG_02: tokenagr2
         AGG_TOKEN_AGG_03: tokenagr3
+        HPC_ADDRESS: http://hpc_app:5001
+        AES_KEY: "sistem-dist-2025"
     ports:
-        - "5004:15000"
+        - "5005:15000"
+    volumes:
+        - ./autorizacoes:/app/keys
+
+  hpc:
+    build:
+      context: ./hpc
+      dockerfile: Dockerfile
+    container_name: hpc_app
+    ports:
+      - "5008:5001" 
+    depends_on:
+      - server
+    environment:
+      - ASPNETCORE_URLS=https://+:5001
+    networks:
+      - default
+
+
+  # sdvisualizer-api:
+  #   build:
+  #     context: .
+  #     dockerfile: ./SDVisualizer.API/Dockerfile
+  #   ports:
+  #     - "7171:80"
+  #   depends_on:
+  #     - server
+  #   environment:
+  #     - ASPNETCORE_ENVIRONMENT=Development
+  #   volumes:
+  #     - ./SDVisualizer.API/appsettings.json:/app/appsettings.json
+
+
 
 volumes:
   mysql-ag1-data:
   mysql-ag2-data:
   mysql-ag3-data:
-  mysql-ag4-data:
+  #mysql-ag4-data:
   mysql-server-data:
