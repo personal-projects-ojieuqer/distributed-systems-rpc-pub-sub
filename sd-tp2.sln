@@ -13,7 +13,11 @@ Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-co
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "preprocessrpc", "preprocessrpc\preprocessrpc.csproj", "{ED9D0C9B-D2D5-408C-81F8-D05C15DF183F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HPC", "HPC\HPC.csproj", "{DB1DE39C-50C5-48C9-B9EE-35533D6D245E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HPC", "HPC\HPC.csproj", "{DB1DE39C-50C5-48C9-B9EE-35533D6D245E}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SDVisualizer.API", "SDVisualizer.API\SDVisualizer.API.csproj", "{30A73ADD-DEC6-48CB-851F-1D587BE271AE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HPCVisualizerFE", "HPCVisualizer\HPCVisualizerFE.csproj", "{19B6CE55-E894-4E31-B08E-AC3DB226E57B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,6 +49,14 @@ Global
 		{DB1DE39C-50C5-48C9-B9EE-35533D6D245E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DB1DE39C-50C5-48C9-B9EE-35533D6D245E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DB1DE39C-50C5-48C9-B9EE-35533D6D245E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{30A73ADD-DEC6-48CB-851F-1D587BE271AE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{30A73ADD-DEC6-48CB-851F-1D587BE271AE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{30A73ADD-DEC6-48CB-851F-1D587BE271AE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{30A73ADD-DEC6-48CB-851F-1D587BE271AE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{19B6CE55-E894-4E31-B08E-AC3DB226E57B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{19B6CE55-E894-4E31-B08E-AC3DB226E57B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{19B6CE55-E894-4E31-B08E-AC3DB226E57B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{19B6CE55-E894-4E31-B08E-AC3DB226E57B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

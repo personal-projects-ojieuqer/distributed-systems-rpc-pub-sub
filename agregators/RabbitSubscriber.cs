@@ -78,11 +78,18 @@ namespace agregators
 
                     timestamp = timestamp.ToUniversalTime();
                     string rawTable = $"{sensor.Trim().ToLowerInvariant()}_data_raw";
-                    string processedTable = $"{sensor.ToLower()}_data_processed";
+                    string processedTable = sensor switch
+                    {
+                        "Temperature" => "temperature_data_processed",
+                        "Hydrophone" => "hydrophone_data_processed",
+                        "Accelerometer" => "accelerometer_data_processed",
+                        "Gyroscope" => "gyroscope_data_processed",
+                        _ => throw new Exception($"Sensor desconhecido: {sensor}")
+                    };
+
 
                     await using var dbConnection = new MySqlConnection(connString);
                     await dbConnection.OpenAsync();
-                    Console.WriteLine($"[{aggregatorId}] Ligação à base de dados local estabelecida.");
 
 
                     // Inserir dados crus imediatamente
@@ -110,14 +117,13 @@ namespace agregators
                     // Inserir dados processados
                     await using var cmdProcessed = dbConnection.CreateCommand();
                     cmdProcessed.CommandText = $@"INSERT INTO {processedTable} (
-                        wavy_id, timestamp, sensor, processed_value, mean, stddev, is_outlier, delta, trend, risk_level, normalized_timestamp, on_schedule
+                        wavy_id, timestamp, sensor, mean, stddev, is_outlier, delta, trend, risk_level, normalized_timestamp, on_schedule
                     ) VALUES (
-                        @wavy_id, @timestamp, @sensor, @processed_value, @mean, @stddev, @is_outlier, @delta, @trend, @risk_level, @normalized_timestamp, @on_schedule
+                        @wavy_id, @timestamp, @sensor, @mean, @stddev, @is_outlier, @delta, @trend, @risk_level, @normalized_timestamp, @on_schedule
                     )";
                     cmdProcessed.Parameters.AddWithValue("@wavy_id", wavyId);
                     cmdProcessed.Parameters.AddWithValue("@timestamp", timestamp);
                     cmdProcessed.Parameters.AddWithValue("@sensor", sensor);
-                    cmdProcessed.Parameters.AddWithValue("@processed_value", resposta.ProcessedValue);
                     cmdProcessed.Parameters.AddWithValue("@mean", resposta.Mean);
                     cmdProcessed.Parameters.AddWithValue("@stddev", resposta.Stddev);
                     cmdProcessed.Parameters.AddWithValue("@is_outlier", resposta.IsOutlier);

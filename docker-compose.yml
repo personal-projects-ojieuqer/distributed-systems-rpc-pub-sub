@@ -149,25 +149,6 @@ services:
     volumes:
       - ./autorizacoes:/app/autorizacoes
 
-  # agregator_app_4:
-  #     build: 
-  #             context: ./agregators
-  #             dockerfile: Dockerfile
-  #     container_name: agregator_app_4
-  #     depends_on:
-  #       - agregator4
-  #     environment:
-  #       AGGREGATOR_ID: AGG_04
-  #       MYSQL_HOST: agregator4
-  #       MYSQL_PORT: 3306
-  #       MYSQL_DB: agregator4_db_tp2
-  #       MYSQL_USER: root
-  #       MYSQL_PASS: root
-  #       LISTEN_PORT: 13314
-  #       SUBSCRIPTION_KEY: "sensor.#.accelerometer"
-  #     ports:
-  #       - "5004:13314"
-
   preprocessrpc:
     build:
       context: ./preprocessrpc
@@ -223,6 +204,21 @@ services:
       - ASPNETCORE_URLS=https://+:5001
     networks:
       - default
+
+
+  # sdvisualizer-api:
+  #   build:
+  #     context: .
+  #     dockerfile: ./SDVisualizer.API/Dockerfile
+  #   ports:
+  #     - "7171:80"
+  #   depends_on:
+  #     - server
+  #   environment:
+  #     - ASPNETCORE_ENVIRONMENT=Development
+  #   volumes:
+  #     - ./SDVisualizer.API/appsettings.json:/app/appsettings.json
+
 
 
 volumes:

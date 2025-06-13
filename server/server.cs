@@ -149,8 +149,13 @@ class Program
 
                 Console.WriteLine($"[{aggId}] Guardado: {wavyId} {sensor} = {value}");
 
-                var historico = await ObterHistoricoAsync(conn, rawTable, wavyId, 5);
-                if (historico.Count >= 2 && double.TryParse(value, out _))
+                var historico = await ObterHistoricoAsync(conn, rawTable, wavyId, 15);
+                bool isNumeric = double.TryParse(value, out _);
+
+
+                bool isStructuredVector = sensor is "Accelerometer" or "Gyroscope";
+
+                if (historico.Count >= 2 && (isNumeric || isStructuredVector))
                 {
                     var resposta = await hpcClient!.PreverDadosAsync(new HpcForecastRequest
                     {
@@ -211,12 +216,51 @@ class Program
         cmd.Parameters.AddWithValue("@w", wavyId);
         cmd.Parameters.AddWithValue("@n", n);
         using var reader = await cmd.ExecuteReaderAsync();
+
         while (await reader.ReadAsync())
         {
-            if (double.TryParse(reader["value"].ToString(), out double val))
-                lista.Add(val);
+            string raw = reader["value"].ToString()!;
+
+            // Tenta parse normal
+            if (double.TryParse(raw, out double simpleVal))
+            {
+                lista.Add(simpleVal);
+                continue;
+            }
+
+            // Caso seja vetor (X:...,Y:...,Z:...)
+            try
+            {
+                raw = raw.Replace(" ", "").Replace("\"", "");
+                var parts = raw.Split(',');
+
+                double x = 0, y = 0, z = 0;
+                foreach (var p in parts)
+                {
+                    var kv = p.Split(':');
+                    if (kv.Length != 2) continue;
+                    var axis = kv[0].ToUpper();
+                    var valStr = kv[1].Replace(",", ".");
+
+                    if (!double.TryParse(valStr, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double val))
+                        continue;
+
+                    if (axis == "X") x = val;
+                    else if (axis == "Y") y = val;
+                    else if (axis == "Z") z = val;
+                }
+
+                double magnitude = Math.Sqrt(x * x + y * y + z * z);
+                lista.Add(magnitude);
+            }
+            catch
+            {
+                continue;
+            }
         }
+
         lista.Reverse();
         return lista;
     }
+
 }

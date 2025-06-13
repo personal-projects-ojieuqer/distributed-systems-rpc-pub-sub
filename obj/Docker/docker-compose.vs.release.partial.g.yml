@@ -21,7 +21,7 @@ services:
       com.microsoft.visualstudio.debuggee.killprogram: "dotnet --roll-forward Major /VSTools/DistrolessHelper/DistrolessHelper.dll --stop dotnet"
       com.microsoft.visual-studio.project-name: "agregators"
     tty: true
-  agregator_app_2:
+  agregator_app_3:
     build:
       args:
         BUILD_CONFIGURATION: Release
@@ -42,7 +42,7 @@ services:
       com.microsoft.visual-studio.project-name: "agregators"
     tty: true
 
-  agregator_app_3:
+  agregator_app2:
     build:
       args:
         BUILD_CONFIGURATION: Release

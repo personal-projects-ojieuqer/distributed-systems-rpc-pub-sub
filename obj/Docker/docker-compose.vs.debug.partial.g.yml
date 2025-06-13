@@ -27,8 +27,8 @@ services:
       com.microsoft.visualstudio.debuggee.workingdirectory: "/app"
       com.microsoft.visualstudio.debuggee.killprogram: "dotnet --roll-forward Major /VSTools/DistrolessHelper/DistrolessHelper.dll --stop dotnet"
     tty: true
-  agregator_app_2:
-    image: agregatorapp2:dev
+  agregator_app_3:
+    image: agregatorapp3:dev
     build:
       args:
         BUILD_CONFIGURATION: Debug
@@ -54,8 +54,8 @@ services:
       com.microsoft.visualstudio.debuggee.killprogram: "dotnet --roll-forward Major /VSTools/DistrolessHelper/DistrolessHelper.dll --stop dotnet"
     tty: true
 
-  agregator_app_3:
-    image: agregatorapp3:dev
+  agregator_app2:
+    image: agregatorapp2:dev
     build:
       args:
         BUILD_CONFIGURATION: Debug

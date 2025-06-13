@@ -1,60 +1,4 @@
-﻿//using Grpc.Core;
-//using HpcService;
-
-//public class HpcForecastService : HpcAnalysisService.HpcAnalysisServiceBase
-//{
-//    public override Task<HpcForecastResponse> PreverDados(HpcForecastRequest request, ServerCallContext context)
-//    {
-//        var historico = request.Historico.ToList();
-//        var previsoes = new List<double>();
-
-//        if (historico.Count < 2)
-//        {
-//            return Task.FromResult(new HpcForecastResponse
-//            {
-//                Previsoes = { historico.FirstOrDefault() },
-//                Classificacao = "dados insuficientes",
-//                Confianca = 0.0
-//            });
-//        }
-
-//        // Calcular média de variações
-//        var deltas = new List<double>();
-//        for (int i = 1; i < historico.Count; i++)
-//            deltas.Add(historico[i] - historico[i - 1]);
-
-//        double deltaMedio = deltas.Average();
-//        double atual = historico.Last();
-
-//        // Gerar 5 previsões futuras
-//        for (int i = 0; i < 5; i++)
-//        {
-//            atual += deltaMedio;
-//            previsoes.Add(Math.Round(atual, 2));
-//        }
-
-//        string classificacao = deltaMedio switch
-//        {
-//            > 0.5 => "subida rápida",
-//            > 0.1 => "subida suave",
-//            < -0.5 => "queda rápida",
-//            < -0.1 => "queda suave",
-//            _ => "estável"
-//        };
-
-//        return Task.FromResult(new HpcForecastResponse
-//        {
-//            Previsoes = { previsoes },
-//            Classificacao = classificacao,
-//            Confianca = 0.85
-//        });
-//    }
-
-//}
-
-
-// HpcForecastService.cs com suporte a 4 sensores (inclui vetores)
-using Grpc.Core;
+﻿using Grpc.Core;
 using HpcService;
 
 namespace ServicoHPC
@@ -68,12 +12,12 @@ namespace ServicoHPC
             var previsoesA = new List<double>();
             var previsoesB = new List<double>();
 
-            if (historico.Count < 2)
+            if (historico.Count < 5)
             {
                 return Task.FromResult(new HpcForecastResponse
                 {
-                    PrevisoesModeloA = { historico.FirstOrDefault() },
-                    PrevisoesModeloB = { historico.FirstOrDefault() },
+                    PrevisoesModeloA = { historico.LastOrDefault() },
+                    PrevisoesModeloB = { historico.LastOrDefault() },
                     ModeloMaisConfiavel = "indefinido",
                     Classificacao = "dados insuficientes",
                     Explicacao = "Histórico insuficiente para gerar previsão",
@@ -82,46 +26,32 @@ namespace ServicoHPC
                 });
             }
 
-            // Cálculo dos deltas
-            var deltas = new List<double>();
-            for (int i = 1; i < historico.Count; i++)
-                deltas.Add(historico[i] - historico[i - 1]);
+            // Modelo A: média móvel ponderada
+            var pesos = Enumerable.Range(1, historico.Count).Select(i => (double)i).ToList();
+            double somaPesos = pesos.Sum();
+            double valorBaseA = historico.Zip(pesos, (v, p) => v * p).Sum() / somaPesos;
+            double deltaA = (historico.Last() - historico.First()) / historico.Count;
 
-            double deltaMedio = deltas.Average();
-
-            // Modelo A: delta médio
-            double atualA = historico.Last();
             for (int i = 0; i < 5; i++)
-            {
-                atualA += deltaMedio;
-                previsoesA.Add(Math.Round(atualA, 2));
-            }
+                previsoesA.Add(Math.Round(valorBaseA + deltaA * (i + 1), 2));
 
-            // Modelo B: regressão linear
-            double somaX = 0, somaY = 0, somaXY = 0, somaXX = 0;
-            for (int i = 0; i < historico.Count; i++)
-            {
-                somaX += i;
-                somaY += historico[i];
-                somaXY += i * historico[i];
-                somaXX += i * i;
-            }
-            double n = historico.Count;
-            double slope = (n * somaXY - somaX * somaY) / (n * somaXX - somaX * somaX);
-            double intercept = (somaY - slope * somaX) / n;
+            // Modelo B: suavização exponencial
+            double alpha = 0.5;
+            double smoothed = historico[0];
+            foreach (var val in historico.Skip(1))
+                smoothed = alpha * val + (1 - alpha) * smoothed;
 
-            for (int i = historico.Count; i < historico.Count + 5; i++)
-            {
-                double y = slope * i + intercept;
-                previsoesB.Add(Math.Round(y, 2));
-            }
+            for (int i = 0; i < 5; i++)
+                previsoesB.Add(Math.Round(smoothed, 2));
 
-            // Comparar confiança entre modelos
-            double confiancaA = Math.Abs(deltaMedio) < 0.5 ? 0.9 : 0.75;
-            double confiancaB = Math.Abs(slope) < 0.5 ? 0.8 : 0.7;
+            // Confiança baseada na variabilidade
+            double desvio = DesvioPadrao(historico);
+            double confiancaA = desvio < 0.5 ? 0.9 : 0.6;
+            double confiancaB = desvio < 0.8 ? 0.85 : 0.7;
             string modeloMaisConfiavel = confiancaA >= confiancaB ? "ModeloA" : "ModeloB";
 
-            // Classificação adaptada ao tipo de sensor
+            // Classificação
+            double deltaMedio = historico.Last() - historico.First();
             string classificacao = sensor switch
             {
                 "Temperature" or "Hydrophone" => deltaMedio switch
@@ -142,7 +72,7 @@ namespace ServicoHPC
             };
 
             string padraoDetectado = DetectarPadrao(historico);
-            string explicacao = $"Sensor: {sensor}. Média de variação: {deltaMedio:F2}. Classificado como '{classificacao}' com base nos últimos {historico.Count} pontos.";
+            string explicacao = $"Sensor: {sensor}. Desvio padrão: {desvio:F2}. Classificado como '{classificacao}' com base nos últimos {historico.Count} pontos.";
 
             return Task.FromResult(new HpcForecastResponse
             {
@@ -154,6 +84,13 @@ namespace ServicoHPC
                 Confianca = Math.Max(confiancaA, confiancaB),
                 PadraoDetectado = padraoDetectado
             });
+        }
+
+        private static double DesvioPadrao(List<double> dados)
+        {
+            double media = dados.Average();
+            double soma = dados.Sum(v => Math.Pow(v - media, 2));
+            return Math.Sqrt(soma / dados.Count);
         }
 
         private string DetectarPadrao(List<double> historico)

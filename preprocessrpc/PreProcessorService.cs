@@ -12,11 +12,11 @@ public class PreprocessServiceImpl : PreprocessService.PreprocessServiceBase
             "Hydrophone" => ProcessHydrophone(request),
             "Accelerometer" => ProcessAccelerometer(request),
             "Gyroscope" => ProcessGyroscope(request),
-            _ => new SensorResponse { IsValid = false, ProcessedValue = $"UNSUPPORTED_SENSOR:{request.Sensor}" }
+            _ => new SensorResponse { IsValid = false }
         };
 
         // Log opcional
-        Console.WriteLine($"[gRPC] {request.Sensor} ({request.Value}) → Valid: {response.IsValid}, Processed: {response.ProcessedValue}");
+        Console.WriteLine($"[gRPC] {request.Sensor} ({request.Value}) → Valid: {response.IsValid}");
 
         return Task.FromResult(response);
     }
@@ -28,7 +28,6 @@ public class PreprocessServiceImpl : PreprocessService.PreprocessServiceBase
             return new SensorResponse
             {
                 IsValid = false,
-                ProcessedValue = "INVALID_TEMPERATURE"
             };
         }
 
@@ -87,7 +86,6 @@ public class PreprocessServiceImpl : PreprocessService.PreprocessServiceBase
         return new SensorResponse
         {
             IsValid = isValid,
-            ProcessedValue = value.ToString("F2", CultureInfo.InvariantCulture),
             Mean = Math.Round(mean, 2),
             Stddev = Math.Round(stddev, 2),
             IsOutlier = isOutlier,
@@ -107,7 +105,6 @@ public class PreprocessServiceImpl : PreprocessService.PreprocessServiceBase
             return new SensorResponse
             {
                 IsValid = false,
-                ProcessedValue = "INVALID_HYDROPHONE"
             };
         }
 
@@ -167,7 +164,6 @@ public class PreprocessServiceImpl : PreprocessService.PreprocessServiceBase
         return new SensorResponse
         {
             IsValid = isValid,
-            ProcessedValue = value.ToString("F1", CultureInfo.InvariantCulture),
             Mean = Math.Round(mean, 2),
             Stddev = Math.Round(stddev, 2),
             IsOutlier = isOutlier,
@@ -248,7 +244,6 @@ public class PreprocessServiceImpl : PreprocessService.PreprocessServiceBase
             return new SensorResponse
             {
                 IsValid = isValid,
-                ProcessedValue = magnitude.ToString("F2", CultureInfo.InvariantCulture),
                 Mean = Math.Round(mean, 2),
                 Stddev = Math.Round(stddev, 2),
                 IsOutlier = isOutlier,
@@ -264,7 +259,6 @@ public class PreprocessServiceImpl : PreprocessService.PreprocessServiceBase
             return new SensorResponse
             {
                 IsValid = false,
-                ProcessedValue = "INVALID_ACCEL_DATA"
             };
         }
     }
@@ -338,7 +332,6 @@ public class PreprocessServiceImpl : PreprocessService.PreprocessServiceBase
             return new SensorResponse
             {
                 IsValid = isValid,
-                ProcessedValue = magnitude.ToString("F2", CultureInfo.InvariantCulture),
                 Mean = Math.Round(mean, 2),
                 Stddev = Math.Round(stddev, 2),
                 IsOutlier = isOutlier,
@@ -354,7 +347,6 @@ public class PreprocessServiceImpl : PreprocessService.PreprocessServiceBase
             return new SensorResponse
             {
                 IsValid = false,
-                ProcessedValue = "INVALID_GYRO_DATA"
             };
         }
     }
