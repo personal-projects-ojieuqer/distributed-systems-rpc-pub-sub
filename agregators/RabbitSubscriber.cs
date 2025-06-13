@@ -1,11 +1,14 @@
-﻿// RabbitSubscriber.cs
-using MySql.Data.MySqlClient;
+﻿using MySql.Data.MySqlClient;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Text;
 
 namespace agregators
 {
+    /// <summary>
+    /// Responsável por subscrever tópicos do RabbitMQ e processar dados de sensores recebidos,
+    /// armazenando-os em base de dados e utilizando gRPC para validação.
+    /// </summary>
     public class RabbitSubscriber
     {
         private readonly IConnection connection;
@@ -15,6 +18,13 @@ namespace agregators
         private readonly string subscriptionKey;
         private readonly GrpcClient grpcClient;
 
+        /// <summary>
+        /// Construtor que estabelece ligação ao RabbitMQ e prepara o canal de consumo.
+        /// </summary>
+        /// <param name="aggregatorId">Identificador único do agregador.</param>
+        /// <param name="connString">String de ligação à base de dados MySQL.</param>
+        /// <param name="subscriptionKey">Chaves de subscrição (routing keys) separadas por vírgulas.</param>
+        /// <param name="grpcClient">Instância de cliente gRPC usada para validação dos dados.</param>
         public RabbitSubscriber(string aggregatorId, string connString, string subscriptionKey, GrpcClient grpcClient)
         {
             this.aggregatorId = aggregatorId;
@@ -33,13 +43,20 @@ namespace agregators
 
             connection = factory.CreateConnection();
             channel = connection.CreateModel();
+
+            // Declaração do exchange e configuração de pré-busca (prefetch)
             channel.ExchangeDeclare(exchange: "sensores", type: ExchangeType.Topic, durable: true);
             channel.BasicQos(0, 10, false);
         }
 
+        /// <summary>
+        /// Inicia a escuta das mensagens no RabbitMQ e o processamento assíncrono das mesmas.
+        /// </summary>
         public void Start()
         {
             string queueName = $"queue_{aggregatorId.ToLower()}";
+
+            // Declaração da fila e ligação a cada routing key
             channel.QueueDeclare(queue: queueName, durable: true, exclusive: false, autoDelete: false);
             foreach (var key in subscriptionKey.Split(','))
             {
@@ -77,7 +94,11 @@ namespace agregators
                     }
 
                     timestamp = timestamp.ToUniversalTime();
+
+                    // Tabela para dados crus
                     string rawTable = $"{sensor.Trim().ToLowerInvariant()}_data_raw";
+
+                    // Determina a tabela de dados processados com base no tipo de sensor
                     string processedTable = sensor switch
                     {
                         "Temperature" => "temperature_data_processed",
@@ -87,25 +108,24 @@ namespace agregators
                         _ => throw new Exception($"Sensor desconhecido: {sensor}")
                     };
 
-
+                    // Ligação à base de dados
                     await using var dbConnection = new MySqlConnection(connString);
                     await dbConnection.OpenAsync();
 
-
-                    // Inserir dados crus imediatamente
+                    // Inserção dos dados crus
                     await using var cmdRaw = dbConnection.CreateCommand();
                     cmdRaw.CommandText = $@"INSERT INTO {rawTable} (wavy_id, timestamp, sensor, value)
-                                           VALUES (@wavy_id, @timestamp, @sensor, @value)";
+                                            VALUES (@wavy_id, @timestamp, @sensor, @value)";
                     cmdRaw.Parameters.AddWithValue("@wavy_id", wavyId);
                     cmdRaw.Parameters.AddWithValue("@timestamp", timestamp);
                     cmdRaw.Parameters.AddWithValue("@sensor", sensor);
                     cmdRaw.Parameters.AddWithValue("@value", value);
                     await cmdRaw.ExecuteNonQueryAsync();
 
-                    // Obter valores anteriores para processamento
+                    // Recolha dos últimos valores para referência estatística
                     var recentValues = await ObterUltimosValoresAsync(wavyId, sensor, 5, connString, rawTable);
 
-                    // Processar via RPC
+                    // Processamento dos dados via gRPC
                     var resposta = await grpcClient.ProcessarAsync(wavyId, sensor, value, timestampRaw, recentValues);
 
                     if (resposta == null)
@@ -114,7 +134,7 @@ namespace agregators
                         return;
                     }
 
-                    // Inserir dados processados
+                    // Inserção dos dados processados na base de dados
                     await using var cmdProcessed = dbConnection.CreateCommand();
                     cmdProcessed.CommandText = $@"INSERT INTO {processedTable} (
                         wavy_id, timestamp, sensor, mean, stddev, is_outlier, delta, trend, risk_level, normalized_timestamp, on_schedule
@@ -139,19 +159,31 @@ namespace agregators
                 catch (Exception ex)
                 {
                     Console.WriteLine($"[{aggregatorId}] Erro ao processar mensagem: {ex.Message}");
-                    channel.BasicNack(ea.DeliveryTag, false, true);
+                    channel.BasicNack(ea.DeliveryTag, false, true); // Rejeita mas reencaminha
                 }
             };
 
             channel.BasicConsume(queue: queueName, autoAck: false, consumer: consumer);
         }
 
+        /// <summary>
+        /// Encerra de forma segura a ligação e o canal RabbitMQ.
+        /// </summary>
         public void Stop()
         {
             channel?.Close();
             connection?.Close();
         }
 
+        /// <summary>
+        /// Obtém os últimos N valores registados para um dado sensor e dispositivo.
+        /// </summary>
+        /// <param name="wavyId">Identificador do dispositivo.</param>
+        /// <param name="sensor">Tipo de sensor.</param>
+        /// <param name="n">Número de valores a obter.</param>
+        /// <param name="connStr">String de ligação à base de dados.</param>
+        /// <param name="tableName">Nome da tabela de onde extrair os valores.</param>
+        /// <returns>Lista com os últimos valores numéricos.</returns>
         private async Task<List<double>> ObterUltimosValoresAsync(string wavyId, string sensor, int n, string connStr, string tableName)
         {
             var valores = new List<double>();
@@ -163,8 +195,8 @@ namespace agregators
 
                 await using var cmd = conn.CreateCommand();
                 cmd.CommandText = $@"SELECT value FROM {tableName} 
-                                    WHERE wavy_id = @wavy_id AND sensor = @sensor 
-                                    ORDER BY timestamp DESC LIMIT @n";
+                                     WHERE wavy_id = @wavy_id AND sensor = @sensor 
+                                     ORDER BY timestamp DESC LIMIT @n";
                 cmd.Parameters.AddWithValue("@wavy_id", wavyId);
                 cmd.Parameters.AddWithValue("@sensor", sensor);
                 cmd.Parameters.AddWithValue("@n", n);
@@ -176,7 +208,7 @@ namespace agregators
                         valores.Add(val);
                 }
 
-                valores.Reverse();
+                valores.Reverse(); // Para manter ordem cronológica crescente
             }
             catch (Exception ex)
             {

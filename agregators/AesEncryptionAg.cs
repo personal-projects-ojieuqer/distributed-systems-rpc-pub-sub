@@ -10,7 +10,7 @@ public static class AesEncryptionAg
 
         using var encryptor = aes.CreateEncryptor();
         using var ms = new MemoryStream();
-        ms.Write(aes.IV, 0, aes.IV.Length); // prepend IV
+        ms.Write(aes.IV, 0, aes.IV.Length);
         using (var cs = new CryptoStream(ms, encryptor, CryptoStreamMode.Write))
         using (var writer = new StreamWriter(cs))
         {

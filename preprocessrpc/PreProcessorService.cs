@@ -2,8 +2,16 @@
 using PreProcessRPC;
 using System.Globalization;
 
+/// <summary>
+/// Implementação do serviço gRPC para pré-processamento de dados de sensores.
+/// Valida, calcula estatísticas e classifica os dados recebidos.
+/// </summary>
 public class PreprocessServiceImpl : PreprocessService.PreprocessServiceBase
 {
+    /// <summary>
+    /// Método gRPC que processa dados de sensores com base no tipo recebido.
+    /// Encaminha o pedido para o método de processamento correspondente.
+    /// </summary>
     public override Task<SensorResponse> FilterSensor(SensorRequest request, ServerCallContext context)
     {
         SensorResponse response = request.Sensor switch
@@ -15,26 +23,27 @@ public class PreprocessServiceImpl : PreprocessService.PreprocessServiceBase
             _ => new SensorResponse { IsValid = false }
         };
 
-        // Log opcional
+        // Log simples para monitorização
         Console.WriteLine($"[gRPC] {request.Sensor} ({request.Value}) → Valid: {response.IsValid}");
 
         return Task.FromResult(response);
     }
 
+    /// <summary>
+    /// Processamento específico para sensores de temperatura.
+    /// Valida intervalos, calcula média, desvio padrão, tendência e risco.
+    /// </summary>
     private SensorResponse ProcessTemperature(SensorRequest request)
     {
         if (!double.TryParse(request.Value.Replace(",", "."), NumberStyles.Float, CultureInfo.InvariantCulture, out double value))
         {
-            return new SensorResponse
-            {
-                IsValid = false,
-            };
+            return new SensorResponse { IsValid = false };
         }
 
-        // 1. Valid range check
+        // 1. Validação de intervalo plausível
         bool isValid = value >= 5 && value <= 35;
 
-        // 2. Mean and standard deviation
+        // 2. Estatísticas básicas
         double mean = value;
         double stddev = 0;
         if (request.RecentValues.Count > 0)
@@ -47,28 +56,27 @@ public class PreprocessServiceImpl : PreprocessService.PreprocessServiceBase
             }
         }
 
-        // 3. Outlier detection
+        // 3. Outlier com base em 2 desvios padrão
         bool isOutlier = stddev > 0 && Math.Abs(value - mean) > 2 * stddev;
 
-        // 4. Delta from last
+        // 4. Delta entre valor atual e último
         double delta = request.RecentValues.Count > 0 ? value - request.RecentValues.Last() : 0;
 
-        // 5. Trend analysis
+        // 5. Análise de tendência simples
         string trend = "unknown";
         if (request.RecentValues.Count >= 1)
         {
             double last = request.RecentValues.Last();
-            if (value > last) trend = "rising";
-            else if (value < last) trend = "falling";
-            else trend = "stable";
+            trend = value > last ? "rising" :
+                    value < last ? "falling" : "stable";
         }
 
-        // 6. Risk level
+        // 6. Classificação de risco
         string riskLevel = "green";
         if (value < 8 || value > 32) riskLevel = "red";
-        else if ((value >= 8 && value < 10) || (value > 30 && value <= 32)) riskLevel = "yellow";
+        else if (value < 10 || value > 30) riskLevel = "yellow";
 
-        // 7. Timestamp normalization
+        // 7. Normalização de timestamp
         string normalizedTimestamp;
         try
         {
@@ -80,7 +88,7 @@ public class PreprocessServiceImpl : PreprocessService.PreprocessServiceBase
             normalizedTimestamp = "INVALID_TIMESTAMP";
         }
 
-        // 8. Schedule check (simplified as always true)
+        // 8. Considera-se sempre "on schedule"
         bool onSchedule = true;
 
         return new SensorResponse
@@ -97,21 +105,16 @@ public class PreprocessServiceImpl : PreprocessService.PreprocessServiceBase
         };
     }
 
-
+    /// <summary>
+    /// Processa leituras de um hidrofone, classificando o nível de ruído.
+    /// </summary>
     private SensorResponse ProcessHydrophone(SensorRequest request)
     {
         if (!double.TryParse(request.Value.Replace(",", "."), NumberStyles.Float, CultureInfo.InvariantCulture, out double value))
-        {
-            return new SensorResponse
-            {
-                IsValid = false,
-            };
-        }
+            return new SensorResponse { IsValid = false };
 
-        // 1. Validação do intervalo esperado
         bool isValid = value >= 100 && value <= 140;
 
-        // 2. Estatísticas
         double mean = value;
         double stddev = 0;
         if (request.RecentValues.Count > 0)
@@ -124,29 +127,25 @@ public class PreprocessServiceImpl : PreprocessService.PreprocessServiceBase
             }
         }
 
-        // 3. Outlier
         bool isOutlier = stddev > 0 && Math.Abs(value - mean) > 2 * stddev;
-
-        // 4. Delta
         double delta = request.RecentValues.Count > 0 ? value - request.RecentValues.Last() : 0;
 
-        // 5. Tendência
         string trend = "unknown";
         if (request.RecentValues.Count >= 1)
         {
             double last = request.RecentValues.Last();
-            if (value > last) trend = "rising";
-            else if (value < last) trend = "falling";
-            else trend = "stable";
+            trend = value > last ? "rising" :
+                    value < last ? "falling" : "stable";
         }
 
-        // 6. Classificação do ruído
-        string riskLevel = "low";
-        if (value >= 130) riskLevel = "extreme";
-        else if (value >= 120) riskLevel = "high";
-        else if (value >= 110) riskLevel = "moderate";
+        string riskLevel = value switch
+        {
+            >= 130 => "extreme",
+            >= 120 => "high",
+            >= 110 => "moderate",
+            _ => "low"
+        };
 
-        // 7. Timestamp normalizado
         string normalizedTimestamp;
         try
         {
@@ -158,9 +157,6 @@ public class PreprocessServiceImpl : PreprocessService.PreprocessServiceBase
             normalizedTimestamp = "INVALID_TIMESTAMP";
         }
 
-        // 8. Ritmo de leitura
-        bool onSchedule = true; // a melhorar com timestamps históricos
-
         return new SensorResponse
         {
             IsValid = isValid,
@@ -171,10 +167,13 @@ public class PreprocessServiceImpl : PreprocessService.PreprocessServiceBase
             Trend = trend,
             RiskLevel = riskLevel,
             NormalizedTimestamp = normalizedTimestamp,
-            OnSchedule = onSchedule
+            OnSchedule = true
         };
     }
 
+    /// <summary>
+    /// Processa dados do acelerómetro, interpretando o vetor XYZ como magnitude total.
+    /// </summary>
     private SensorResponse ProcessAccelerometer(SensorRequest request)
     {
         try
@@ -183,14 +182,13 @@ public class PreprocessServiceImpl : PreprocessService.PreprocessServiceBase
             var components = cleaned.Split(',');
 
             double x = 0, y = 0, z = 0;
-
             foreach (var comp in components)
             {
                 var parts = comp.Split(':');
                 if (parts.Length == 2)
                 {
-                    var axis = parts[0].ToUpper();
-                    var valStr = parts[1].Replace(",", ".");
+                    string axis = parts[0].ToUpper();
+                    string valStr = parts[1].Replace(",", ".");
                     if (double.TryParse(valStr, NumberStyles.Float, CultureInfo.InvariantCulture, out double val))
                     {
                         if (axis == "X") x = val;
@@ -201,11 +199,8 @@ public class PreprocessServiceImpl : PreprocessService.PreprocessServiceBase
             }
 
             double magnitude = Math.Sqrt(x * x + y * y + z * z);
-
-            // Validação: magnitude aceitável
             bool isValid = magnitude < 20;
 
-            // Média e desvio padrão (usando recentValues como magnitude)
             double mean = request.RecentValues.Count > 0 ? request.RecentValues.Average() : magnitude;
             double stddev = request.RecentValues.Count > 1 ?
                 Math.Sqrt(request.RecentValues.Sum(v => Math.Pow(v - mean, 2)) / request.RecentValues.Count) : 0;
@@ -217,16 +212,15 @@ public class PreprocessServiceImpl : PreprocessService.PreprocessServiceBase
             if (request.RecentValues.Count >= 1)
             {
                 double last = request.RecentValues.Last();
-                if (magnitude > last) trend = "rising";
-                else if (magnitude < last) trend = "falling";
-                else trend = "stable";
+                trend = magnitude > last ? "rising" :
+                        magnitude < last ? "falling" : "stable";
             }
 
             string riskLevel = magnitude switch
             {
                 < 5 => "low",
-                >= 5 and < 10 => "moderate",
-                >= 10 and < 20 => "high",
+                < 10 => "moderate",
+                < 20 => "high",
                 _ => "extreme"
             };
 
@@ -256,13 +250,13 @@ public class PreprocessServiceImpl : PreprocessService.PreprocessServiceBase
         }
         catch
         {
-            return new SensorResponse
-            {
-                IsValid = false,
-            };
+            return new SensorResponse { IsValid = false };
         }
     }
 
+    /// <summary>
+    /// Processa dados do giroscópio, aplicando lógica semelhante ao acelerómetro.
+    /// </summary>
     private SensorResponse ProcessGyroscope(SensorRequest request)
     {
         try
@@ -271,14 +265,13 @@ public class PreprocessServiceImpl : PreprocessService.PreprocessServiceBase
             var components = cleaned.Split(',');
 
             double x = 0, y = 0, z = 0;
-
             foreach (var comp in components)
             {
                 var parts = comp.Split(':');
                 if (parts.Length == 2)
                 {
-                    var axis = parts[0].ToUpper();
-                    var valStr = parts[1].Replace(",", ".");
+                    string axis = parts[0].ToUpper();
+                    string valStr = parts[1].Replace(",", ".");
                     if (double.TryParse(valStr, NumberStyles.Float, CultureInfo.InvariantCulture, out double val))
                     {
                         if (axis == "X") x = val;
@@ -289,11 +282,8 @@ public class PreprocessServiceImpl : PreprocessService.PreprocessServiceBase
             }
 
             double magnitude = Math.Sqrt(x * x + y * y + z * z);
-
-            // Validação: rotação normal abaixo de 5 rad/s
             bool isValid = magnitude <= 5;
 
-            // Estatísticas com recentValues
             double mean = request.RecentValues.Count > 0 ? request.RecentValues.Average() : magnitude;
             double stddev = request.RecentValues.Count > 1 ?
                 Math.Sqrt(request.RecentValues.Sum(v => Math.Pow(v - mean, 2)) / request.RecentValues.Count) : 0;
@@ -305,16 +295,15 @@ public class PreprocessServiceImpl : PreprocessService.PreprocessServiceBase
             if (request.RecentValues.Count >= 1)
             {
                 double last = request.RecentValues.Last();
-                if (magnitude > last) trend = "rising";
-                else if (magnitude < last) trend = "falling";
-                else trend = "stable";
+                trend = magnitude > last ? "rising" :
+                        magnitude < last ? "falling" : "stable";
             }
 
             string riskLevel = magnitude switch
             {
                 < 1 => "stable",
-                >= 1 and < 3 => "moderate",
-                >= 3 and <= 5 => "unstable",
+                < 3 => "moderate",
+                <= 5 => "unstable",
                 _ => "dangerous"
             };
 
@@ -344,12 +333,7 @@ public class PreprocessServiceImpl : PreprocessService.PreprocessServiceBase
         }
         catch
         {
-            return new SensorResponse
-            {
-                IsValid = false,
-            };
+            return new SensorResponse { IsValid = false };
         }
     }
-
-
 }

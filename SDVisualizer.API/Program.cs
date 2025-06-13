@@ -1,23 +1,38 @@
-﻿namespace OceanMonitor.API;
-internal class Program
+﻿namespace OceanMonitor.API
 {
-    private static void Main(string[] args)
+    /// <summary>
+    /// Classe de entrada principal para a aplicação API do OceanMonitor.
+    /// Responsável pela configuração de serviços, middleware e arranque do servidor web.
+    /// </summary>
+    internal class Program
     {
-        var builder = WebApplication.CreateBuilder(args);
+        /// <summary>
+        /// Ponto de entrada da aplicação. Configura e arranca o servidor Web.
+        /// </summary>
+        /// <param name="args">Argumentos de linha de comandos (não utilizados).</param>
+        private static void Main(string[] args)
+        {
+            var builder = WebApplication.CreateBuilder(args);
 
-        // Add services
-        builder.Services.AddControllers();
-        builder.Services.AddEndpointsApiExplorer();
-        builder.Services.AddSwaggerGen();
+            // Registo de serviços para a API
+            builder.Services.AddControllers(); // Ativa o suporte para controladores MVC
+            builder.Services.AddEndpointsApiExplorer(); // Suporte para endpoints via minimal API (caso seja necessário)
+            builder.Services.AddSwaggerGen(); // Geração automática da documentação Swagger (OpenAPI)
 
-        var app = builder.Build();
+            var app = builder.Build();
 
-        app.UseSwagger();
-        app.UseSwaggerUI();
+            // Middleware de documentação da API
+            app.UseSwagger(); // Gera ficheiro Swagger JSON
+            app.UseSwaggerUI(); // Interface gráfica interativa para testar endpoints
 
-        app.UseAuthorization();
-        app.MapControllers();
+            // Middleware de autorização (pode ser expandido com autenticação)
+            app.UseAuthorization();
 
-        app.Run();
+            // Mapeia os controladores atribuídos por rota
+            app.MapControllers();
+
+            // Inicia a aplicação
+            app.Run();
+        }
     }
 }
