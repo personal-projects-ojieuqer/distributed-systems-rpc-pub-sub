@@ -151,70 +151,66 @@
 
         const ctx = document.getElementById('multiChart')?.getContext('2d');
         const chart = new Chart(ctx, {
-    type: 'line',
-    data: {
-        labels: [...Array(5).keys()].map(i => `T+${i}min`),
-        datasets: []
-    },
-    options: {
-        responsive: true,
-        plugins: {
-            legend: {
-                position: 'top',
-                labels: {
-                    color: '#ccc',
-                    boxWidth: 20,
-                    padding: 12,
-                    font: {
-                        size: 11
+            type: 'line',
+            data: {
+                labels: [...Array(5).keys()].map(i => `T+${i}min`),
+                datasets: []
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            color: '#ccc',
+                            boxWidth: 20,
+                            padding: 12,
+                            font: {
+                                size: 11
+                            },
+                            generateLabels: function (chart) {
+                                const items = Chart.defaults.plugins.legend.labels.generateLabels(chart);
+                                return items.sort((a, b) => a.text.localeCompare(b.text));
+                            }
+                        }
                     },
-                    // ORDENAR A LEGENDA
-                    generateLabels: function (chart) {
-                        const items = Chart.defaults.plugins.legend.labels.generateLabels(chart);
-                        return items.sort((a, b) => a.text.localeCompare(b.text));
+                    title: {
+                        display: true,
+                        text: '📈 Dados + Previsões por WAVY',
+                        color: '#fff',
+                        font: { size: 18 }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => `${ctx.dataset.label}: ${ctx.raw}`
+                        }
+                    }
+                },
+                layout: {
+                    padding: { top: 10, bottom: 10 }
+                },
+
+                scales: {
+                    y: {
+                        ticks: {
+                            color: '#aaa'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            color: '#aaa'
+                        }
                     }
                 }
-            },
-            title: {
-                display: true,
-                text: '📈 Dados + Previsões por WAVY',
-                color: '#fff',
-                font: { size: 18 }
-            },
-            tooltip: {
-                callbacks: {
-                    label: ctx => `${ctx.dataset.label}: ${ctx.raw}`
-                }
             }
-        },
-        layout: {
-            padding: { top: 10, bottom: 10 }
-        },
-
-        scales: {
-            y: {
-                beginAtZero: false,
-                suggestedMin: 0,    // ajuste conforme seus dados
-                suggestedMax: 100,  // ajuste conforme seus dados
-                ticks: {
-                    color: '#aaa'
-                }
-            },
-            x: {
-                ticks: {
-                    color: '#aaa'
-                }
-            }
-        }
-    }
-});
+        });
 
 
         function gerarDatasets() {
             let datasets = [];
-            @foreach (var wavy in Model.DadosPorWavy)
-            {
-                <text>
+        @foreach (var wavy in Model.DadosPorWavy)
+        {
+            <text>
                     datasets.push({
                         label: '@wavy.WavyId (Real)',
                         data: @Html.Raw(Json.Serialize(wavy.DadosReais.Take(5))),
@@ -223,27 +219,27 @@
                         tension: 0.4,
                         wavy: '@wavy.WavyId'
                     });
-                    datasets.push({
-                        label: '@wavy.WavyId (Modelo A)',
-                        data: @Html.Raw(Json.Serialize(wavy.Previsoes.Select(p => p.ModeloA))),
-                        borderColor: getColor('@wavy.WavyId'),
-                        borderDash: [5, 5],
-                        borderWidth: 1,
-                        tension: 0.4,
-                        wavy: '@wavy.WavyId'
-                    });
-                    datasets.push({
-                        label: '@wavy.WavyId (Modelo B)',
-                        data: @Html.Raw(Json.Serialize(wavy.Previsoes.Select(p => p.ModeloB))),
-                        borderColor: getColor('@wavy.WavyId'),
-                        borderDash: [2, 4],
-                        borderWidth: 1,
-                        tension: 0.4,
-                        wavy: '@wavy.WavyId'
-                    });
-                </text>
-            }
-            return datasets;
+                datasets.push({
+                    label: '@wavy.WavyId (Modelo A)',
+                    data: @Html.Raw(Json.Serialize(wavy.Previsoes.Select(p => p.ModeloA))),
+                    borderColor: getColor('@wavy.WavyId'),
+                    borderDash: [5, 5],
+                    borderWidth: 1,
+                    tension: 0.4,
+                    wavy: '@wavy.WavyId'
+                });
+                datasets.push({
+                    label: '@wavy.WavyId (Modelo B)',
+                    data: @Html.Raw(Json.Serialize(wavy.Previsoes.Select(p => p.ModeloB))),
+                    borderColor: getColor('@wavy.WavyId'),
+                    borderDash: [2, 4],
+                    borderWidth: 1,
+                    tension: 0.4,
+                    wavy: '@wavy.WavyId'
+                });
+            </text>
+        }
+                                    return datasets;
         }
 
         allDatasets = gerarDatasets();

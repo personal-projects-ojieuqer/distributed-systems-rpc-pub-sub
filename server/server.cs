@@ -14,11 +14,15 @@ class Program
 
     private static RSACryptoServiceProvider rsa;
 
+    /// <summary>
+    /// Ponto de entrada principal do servidor.
+    /// Inicializa a chave RSA, configura a ligação ao serviço HPC, à base de dados,
+    /// e começa a escutar conexões TCP dos agregadores.
+    /// </summary>
     static async Task Main()
     {
-        // Geração da chave pública RSA
         rsa = new RSACryptoServiceProvider(2048);
-        string publicKeyXml = rsa.ToXmlString(false); // apenas chave pública
+        string publicKeyXml = rsa.ToXmlString(false);
 
         Directory.CreateDirectory("/app/keys");
         File.WriteAllText("/app/keys/publicKey.xml", publicKeyXml);
@@ -49,6 +53,10 @@ class Program
         }
     }
 
+    /// <summary>
+    /// Lida com a comunicação de um agregador, realizando o handshake, recepção de dados,
+    /// encriptação e armazenamento, e chamadas ao serviço de previsão HPC.
+    /// </summary>
     static async Task HandleAggregatorAsync(TcpClient client)
     {
         try
@@ -85,6 +93,7 @@ class Program
 
             string? line;
             string? currentAgg = null;
+            bool handshakeVerificado = false;
 
             while ((line = await reader.ReadLineAsync()) != null)
             {
@@ -99,6 +108,32 @@ class Program
                 }
 
                 Console.WriteLine($"[SERVIDOR] Linha recebida: {line}");
+
+                if (line.StartsWith("HANDSHAKE:"))
+                {
+                    var handshakeParts = line.Split(':');
+                    string handshakeAggId = handshakeParts[1];
+                    string receivedToken = handshakeParts[2];
+
+                    string? expectedToken = Environment.GetEnvironmentVariable($"AGG_TOKEN_{handshakeAggId}");
+
+                    if (expectedToken is null || expectedToken != receivedToken)
+                    {
+                        Console.WriteLine($"[SERVIDOR] ❌ Token inválido para {handshakeAggId}. Ligação recusada.");
+                        client.Close(); return;
+                    }
+
+                    Console.WriteLine($"[SERVIDOR] 🤝 Handshake com {handshakeAggId} verificado com sucesso.");
+                    handshakeVerificado = true;
+                    currentAgg = handshakeAggId;
+                    continue;
+                }
+
+                if (!handshakeVerificado)
+                {
+                    Console.WriteLine($"[SERVIDOR] ❌ Dados recebidos antes de handshake válido. Ligação recusada.");
+                    client.Close(); return;
+                }
 
                 if (line.StartsWith("START:")) { currentAgg = line.Split(':')[1]; Console.WriteLine($"Início de {currentAgg}"); continue; }
                 if (line.StartsWith("END:")) { Console.WriteLine($"Fim de {line.Split(':')[1]}"); continue; }
@@ -151,7 +186,6 @@ class Program
 
                 var historico = await ObterHistoricoAsync(conn, rawTable, wavyId, 15);
                 bool isNumeric = double.TryParse(value, out _);
-
 
                 bool isStructuredVector = sensor is "Accelerometer" or "Gyroscope";
 
@@ -208,6 +242,10 @@ class Program
         }
     }
 
+    /// <summary>
+    /// Obtém os últimos 'n' valores registados de um determinado sensor de um WAVY.
+    /// Caso o valor seja vetorial (e.g. Acelerómetro), calcula a magnitude.
+    /// </summary>
     static async Task<List<double>> ObterHistoricoAsync(MySqlConnection conn, string table, string wavyId, int n)
     {
         var lista = new List<double>();
@@ -221,14 +259,12 @@ class Program
         {
             string raw = reader["value"].ToString()!;
 
-            // Tenta parse normal
             if (double.TryParse(raw, out double simpleVal))
             {
                 lista.Add(simpleVal);
                 continue;
             }
 
-            // Caso seja vetor (X:...,Y:...,Z:...)
             try
             {
                 raw = raw.Replace(" ", "").Replace("\"", "");
@@ -262,5 +298,4 @@ class Program
         lista.Reverse();
         return lista;
     }
-
 }

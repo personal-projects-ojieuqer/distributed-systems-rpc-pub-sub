@@ -1,13 +1,25 @@
 ﻿namespace wavies.Wavy
 {
+    /// <summary>
+    /// Classe responsável pela gestão de instâncias WAVY,
+    /// incluindo criação, inicialização, eliminação e configuração.
+    /// </summary>
     public static class WavyManager
     {
+        /// <summary>
+        /// Obtém o caminho absoluto da pasta onde os dados dos WAVIES estão armazenados.
+        /// </summary>
+        /// <returns>Caminho completo da pasta de dados WAVY.</returns>
         public static string GetWaviesFolderPath()
         {
             string projectRoot = Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory)!.Parent!.Parent!.Parent!.FullName;
             return Path.Combine(projectRoot, "Wavy", "Data", "Wavies");
         }
 
+        /// <summary>
+        /// Adiciona uma quantidade definida de WAVIES com dados de configuração e ficheiros base gerados aleatoriamente.
+        /// </summary>
+        /// <param name="numberOfWavies">Número de WAVIES a criar.</param>
         public static void AdicionarWaviesAleatorio(int numberOfWavies)
         {
             string folderPath = GetWaviesFolderPath();
@@ -16,17 +28,18 @@
             string configPath = Path.Combine(folderPath, "wavy_config.csv");
             var configLines = new List<string>();
 
+            // Criação do cabeçalho se o ficheiro ainda não existir
             if (File.Exists(configPath))
                 configLines.AddRange(File.ReadAllLines(configPath));
             else
                 configLines.Add("WAVY_ID;status;[data_types];last_sync");
 
+            // Determina o próximo ID baseado no máximo atual
             int nextId = configLines
                 .Skip(1)
                 .Select(line => int.TryParse(line.Split(';')[0].Replace("WAVY_", ""), out var id) ? id : 0)
                 .DefaultIfEmpty(0)
                 .Max() + 1;
-
 
             for (int i = 0; i < numberOfWavies; i++)
             {
@@ -40,6 +53,7 @@
                 string configLine = $"{wavyId};{status};[{dataTypes}];{lastSync}";
                 configLines.Add(configLine);
 
+                // Criação do ficheiro CSV base do WAVY
                 string csvPath = Path.Combine(folderPath, $"{wavyId}.csv");
                 File.WriteAllText(csvPath, "Timestamp,SensorType,Value\n");
 
@@ -50,8 +64,12 @@
             Console.WriteLine($"Configuração atualizada em {configPath}");
         }
 
+        // Lista de instâncias WAVY atualmente em execução
         static List<WavyRunner> ativos = new();
 
+        /// <summary>
+        /// Inicializa todas as instâncias WAVY presentes no ficheiro de configuração.
+        /// </summary>
         public static void IniciarWaviesExistentes()
         {
             string folder = GetWaviesFolderPath();
@@ -64,6 +82,7 @@
             }
 
             var lines = File.ReadAllLines(configPath).Skip(1);
+
             foreach (var line in lines)
             {
                 var parts = line.Split(';');
@@ -77,6 +96,7 @@
                 Console.WriteLine($"{wavyId} iniciado.");
             }
 
+            // Trata do encerramento limpo em caso de cancelamento (Ctrl+C)
             Console.CancelKeyPress += (s, e) =>
             {
                 Console.WriteLine("Cancelamento recebido, a terminar WAVIES...");
@@ -85,6 +105,9 @@
             };
         }
 
+        /// <summary>
+        /// Permite ao utilizador adicionar manualmente uma ou mais instâncias WAVY.
+        /// </summary>
         public static void AdicionarWavies()
         {
             Console.Write("Quantos WAVIES queres adicionar? ");
@@ -131,6 +154,9 @@
             File.WriteAllLines(configPath, configLines);
         }
 
+        /// <summary>
+        /// Elimina todos os ficheiros e configurações de instâncias WAVY existentes.
+        /// </summary>
         public static void EliminarWavies()
         {
             string folder = GetWaviesFolderPath();
@@ -166,6 +192,9 @@
             }
         }
 
+        /// <summary>
+        /// Elimina um WAVY específico selecionado pelo utilizador.
+        /// </summary>
         public static void EliminarWavyEspecifico()
         {
             string folder = GetWaviesFolderPath();

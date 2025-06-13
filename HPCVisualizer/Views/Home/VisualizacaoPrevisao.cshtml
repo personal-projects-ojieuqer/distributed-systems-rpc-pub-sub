@@ -115,9 +115,7 @@
                             },
                             scales: {
                                 y: {
-                                    beginAtZero: false,
-                                    suggestedMin: 0,    // ajuste conforme seus dados
-                                    suggestedMax: 100,  // ajuste conforme seus dados
+
                                     ticks: {
                                         color: '#aaa'
                                     }
@@ -138,18 +136,18 @@
                         return cores[hash % cores.length];
                     }
 
-                    @foreach (var wavy in Model.DadosPorWavy)
-                    {
-                        var reais = wavy.DadosReais.TakeLast(5).ToList();
-                        var modeloA = wavy.Previsoes.Select(p => p.ModeloA).ToList();
-                        var modeloB = wavy.Previsoes.Select(p => p.ModeloB).ToList();
+                @foreach (var wavy in Model.DadosPorWavy)
+                {
+                    var reais = wavy.DadosReais.TakeLast(5).ToList();
+                    var modeloA = wavy.Previsoes.Select(p => p.ModeloA).ToList();
+                    var modeloB = wavy.Previsoes.Select(p => p.ModeloB).ToList();
 
-                        var reaisMaisA = reais.Concat(modeloA).ToList();
-                        var nullsReais = Enumerable.Repeat<double?>(null, reais.Count).ToList();
-                        var modeloAOnly = nullsReais.Concat(modeloA.Select(x => (double?)x)).ToList();
-                        var modeloBOnly = nullsReais.Concat(modeloB.Select(x => (double?)x)).ToList();
+                    var reaisMaisA = reais.Concat(modeloA).ToList();
+                    var nullsReais = Enumerable.Repeat<double?>(null, reais.Count).ToList();
+                    var modeloAOnly = nullsReais.Concat(modeloA.Select(x => (double?)x)).ToList();
+                    var modeloBOnly = nullsReais.Concat(modeloB.Select(x => (double?)x)).ToList();
 
-                        <text>
+                    <text>
                             chart.data.datasets.push({
                                 label: '@wavy.WavyId (Real)',
                                 data: @Html.Raw(Json.Serialize(reaisMaisA.Select<double, double?>((v, i) => i < @reais.Count ? v : (double?)null))),
@@ -158,27 +156,27 @@
                                 tension: 0.4
                             });
 
-                            chart.data.datasets.push({
-                                label: '@wavy.WavyId (Modelo A)',
-                                data: @Html.Raw(Json.Serialize(modeloAOnly)),
-                                borderColor: getColor('@wavy.WavyId'),
-                                borderDash: [5, 5],
-                                borderWidth: 1,
-                                tension: 0.4
-                            });
+                        chart.data.datasets.push({
+                            label: '@wavy.WavyId (Modelo A)',
+                            data: @Html.Raw(Json.Serialize(modeloAOnly)),
+                            borderColor: getColor('@wavy.WavyId'),
+                            borderDash: [5, 5],
+                            borderWidth: 1,
+                            tension: 0.4
+                        });
 
-                            chart.data.datasets.push({
-                                label: '@wavy.WavyId (Modelo B)',
-                                data: @Html.Raw(Json.Serialize(modeloBOnly)),
-                                borderColor: getColor('@wavy.WavyId'),
-                                borderDash: [2, 4],
-                                borderWidth: 1,
-                                tension: 0.4
-                            });
-                        </text>
-                    }
+                        chart.data.datasets.push({
+                            label: '@wavy.WavyId (Modelo B)',
+                            data: @Html.Raw(Json.Serialize(modeloBOnly)),
+                            borderColor: getColor('@wavy.WavyId'),
+                            borderDash: [2, 4],
+                            borderWidth: 1,
+                            tension: 0.4
+                        });
+                    </text>
+                }
 
-                    chart.update();
+                        chart.update();
                     window.chart = chart;
                     window.allDatasets = chart.data.datasets;
                 });
@@ -186,7 +184,7 @@
         }
         else
         {
-            <p class="text-warning text-center">⚠️ Seleciona um sensor para visualizar previsões.</p>
+            <p class="text-warning text-center">⚠️ Seleciona um sensor para visualizar dados e previsões.</p>
         }
     </div>
 

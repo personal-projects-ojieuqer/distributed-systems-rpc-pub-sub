@@ -18,12 +18,12 @@ build_property.GenerateRazorMetadataSourceChecksumAttributes =
 build_property.MSBuildProjectDirectory = C:\Users\mfreq\Desktop\UTAD\Semestre 2\Sistemas Distribuidos\TP2\sd-tp2-rpc-pub-sub\HPCVisualizer
 build_property._RazorSourceGeneratorDebug = 
 
-[C:/Users/mfreq/Desktop/UTAD/Semestre 2/Sistemas Distribuidos/TP2/sd-tp2-rpc-pub-sub/HPCVisualizer/Views/Home/Index.cshtml]
-build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxJbmRleC5jc2h0bWw=
-build_metadata.AdditionalFiles.CssScope = 
-
 [C:/Users/mfreq/Desktop/UTAD/Semestre 2/Sistemas Distribuidos/TP2/sd-tp2-rpc-pub-sub/HPCVisualizer/Views/Home/VisualizacaoPrevisao.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxWaXN1YWxpemFjYW9QcmV2aXNhby5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/mfreq/Desktop/UTAD/Semestre 2/Sistemas Distribuidos/TP2/sd-tp2-rpc-pub-sub/HPCVisualizer/Views/Home/VisualizarPrevisaoEReais.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxWaXN1YWxpemFyUHJldmlzYW9FUmVhaXMuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/mfreq/Desktop/UTAD/Semestre 2/Sistemas Distribuidos/TP2/sd-tp2-rpc-pub-sub/HPCVisualizer/Views/Shared/Error.cshtml]

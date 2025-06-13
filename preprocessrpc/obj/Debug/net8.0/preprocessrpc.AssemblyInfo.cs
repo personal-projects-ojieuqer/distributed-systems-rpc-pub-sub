@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("preprocessrpc")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+33dd3096df497adf88740de73d5f688a72691191")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+764428b0a1e29d51cd6e1bc7286af140e45309f8")]
 [assembly: System.Reflection.AssemblyProductAttribute("preprocessrpc")]
 [assembly: System.Reflection.AssemblyTitleAttribute("preprocessrpc")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
