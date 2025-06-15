@@ -1,9 +1,11 @@
-# 🐠 Distributed Sensor System - WAVY (SD 2024/2025)
+# 🐠 Distributed Sensor System - TP2 SD (2024/2025)
 
-Practical Assignment 1 for the course unit **Distributed Systems** (Computer Engineering - IPVC/ESTG).  
-This project simulates a **distributed sensor ecosystem** — composed of WAVY sensors, aggregators, and a central server — for real-time data collection and consolidation.
+Practical Assignment 2 for the **Distributed Systems** course (Computer Engineering - IPVC/ESTG).  
+This project simulates a modular and secure distributed sensor system, composed of WAVY devices, intermediate aggregators, a central server for data processing, and auxiliary forecasting services.
 
-## 📌 Authors
+---
+
+## 👨‍💻 Authors
 
 - **Rui Requeijo** - al79138  
 - **João Mendes** - al79229  
@@ -11,65 +13,91 @@ This project simulates a **distributed sensor ecosystem** — composed of WAVY s
 
 ---
 
-## 🧠 Goals
+## 🎯 Objectives
 
-- Apply fundamental distributed systems concepts:
-  - Communication using **TCP Sockets**
-  - **Concurrent execution (Multithreading)**
-  - **Synchronization using Mutex**
-  - Logical separation of concerns (aggregators, sensors, and server)
-
-- Simulate a realistic system with:
-  - **Local database per aggregator (MySQL)**
-  - A **central server** that consolidates data
-  - **Device authorization** using tokens and permission lists
-  - **Interactive console-based sensor management**
-
----
-## 🗺️ Architecture Map
-
-![image](https://github.com/user-attachments/assets/d79849b4-69e6-4943-836f-e8b551d5e08b)
+- Apply distributed systems principles in practice:
+  - Communication using **TCP Sockets** and **RabbitMQ (Pub/Sub)**
+  - **Concurrency** using threads and `SemaphoreSlim`
+  - **Hybrid encryption** (RSA + AES)
+  - Distributed architecture using gRPC and RESTful services
+- Additional value:
+  - **Sensor data validation (preprocessing)**
+  - **Forecasting of sensor data (HPC)**
+  - **Interactive web interface for analysis**
 
 ---
 
-- **WAVY**: simulates sensors (temperature, accelerometer, gyroscope, hydrophones)
-- **Aggregators**: receive data from WAVIES, store it locally, and centralize the data in the central server
-- **Central Server**: collects and centralizes data from all aggregators
+## 🗺️ System Architecture
 
----
+![image](https://github.com/user-attachments/assets/9a606d13-52e4-4439-a562-bc31316ea6a8)
+
 
 ## 📂 Project Structure
 
 ```bash
-├── agregators/             # Aggregator logic
-│   ├── AggregatorHandler.cs
-│   ├── AggregatorSender.cs
-│   └── Program.cs
-├── server/                 # Central server
-│   └── Program.cs
-├── Wavy/                   # Simulated WAVY sensors
-│   ├── WavyManager.cs
-│   ├── WavyRunner.cs
-│   ├── WavySecondaryFunctions.cs
-│   ├── ProjectExplanation.cs
-│   └── Program.cs
-├── docker-compose.yml      # Docker infrastructure
-├── README.md               # This file
+├── Wavy/                     # Simuladores de sensores WAVY
+├── agregators/              # Agregadores com RabbitMQ + gRPC
+├── server/                  # Validação + armazenamento central + chamada HPC
+├── preprocessrpc/           # Serviço gRPC de pré-processamento
+├── hpc/                     # Serviço gRPC de previsão (modelo A e B)
+├── SDVisualizer.API/        # API RESTful (endpoints de consulta)
+├── HPCVisualizerFE/         # Interface web em ASP.NET MVC
+├── docker-compose.yml       # Infraestrutura Docker
+└── README.md
 ```
 
-### 🔧 Requirements
+## 🔐 Security
+Hybrid encryption:
 
-- [.NET 7 or 8](https://dotnet.microsoft.com/)
-- [Docker + Docker Compose](https://docs.docker.com/compose/)
-- (Optional) MySQL Workbench for data exploration
+AES key generated per session by aggregator
 
+Encrypted using RSA (server’s public key)
+
+Handshake authentication using pre-shared tokens (from environment variables)
+
+Authorization list: autorizacoes/AGG_XX.txt defines allowed WAVY devices per aggregator
+
+
+## 🔧 Technologies Used
+.NET 8 (C#)
+
+RabbitMQ (message broker)
+
+MySQL (distributed and central databases)
+
+gRPC (structured services)
+
+Docker & Docker Compose
+
+Chart.js + ASP.NET MVC (frontend visualizations)
 ---
 
-## 🐳 Docker
+## 🐳 Docker Compose
+All components are containerized using Docker:
 
-- Each aggregator has its own **MySQL database**
-- The central server collects data from all aggregators
-- Includes .env files to configure ports, credentials, and tokens
-- Modular and scalable infrastructure
+rabbitmq: message broker (5672/15672)
 
+mysql_*: MySQL databases for each aggregator and central server
+
+agregator_app_X: listens to topics, processes data and sends to server
+
+server_app: centralizes and forwards data to the HPC component
+
+preprocessrpc: gRPC service for preprocessing sensor data
+
+hpc: gRPC service with statistical forecasting models
+
+SDVisualizer.API and HPCVisualizerFE: API and web UI for visualization
+
+Environment variables define ports, tokens, database credentials, and routing.
+Persistent volumes are used for database storage and config files.
 ---
+
+## 📈 Visualization Interface
+View sensors by type or WAVY device
+
+Display actual + forecasted values over time
+
+Toggle light/dark mode, download charts, identify risky trends
+
+Data served via a REST API documented with Swagger
